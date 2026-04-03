@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parent Controls</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3b82f6">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .btn-group button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
+
+    /* ── Passcode Lock Screen ── */
+    .lock-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lock-overlay.hidden { display: none; }
+    .lock-box {
+      text-align: center;
+      padding: 32px 24px;
+      max-width: 320px;
+      width: 100%;
+    }
+    .lock-box .lock-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .lock-box h2 { font-size: 1.2rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .lock-box p { font-size: .85rem; color: var(--muted); margin-bottom: 20px; }
+    .pin-inputs {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .pin-inputs input {
+      width: 48px;
+      height: 56px;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--text);
+      outline: none;
+      -webkit-appearance: none;
+    }
+    .pin-inputs input:focus { border-color: var(--blue); }
+    .pin-inputs input.error { border-color: var(--red); animation: pinShake .4s ease; }
+    .lock-error {
+      font-size: .85rem;
+      color: var(--red);
+      height: 20px;
+    }
+    @keyframes pinShake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Passcode Lock -->
+  <div class="lock-overlay" id="lock-overlay">
+    <div class="lock-box">
+      <div class="lock-icon">&#x1F512;</div>
+      <h2>Parent Access</h2>
+      <p>Enter the 4-digit code to continue</p>
+      <div class="pin-inputs">
+        <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+        <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+        <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+        <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+      </div>
+      <div class="lock-error" id="lock-error"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <h1>Parent Controls</h1>
+    </div>
+
+    <!-- Date Navigation -->
+    <div class="date-nav">
+      <button id="prev-day">&#8249;</button>
+      <span class="current-date" id="current-date"></span>
+      <button id="next-day">&#8250;</button>
+    </div>
+
+    <!-- Today Total -->
+    <div class="card" style="text-align:center">
+      <div style="font-size:2rem;font-weight:700" id="day-total">0</div>
+      <div style="color:var(--muted);font-size:.9rem">Points Today (max 10) <span id="day-bonus" style="color:#d97706"></span></div>
+    </div>
+
+    <!-- Category Controls -->
+    <div class="card">
+      <h2>Score Categories</h2>
+
+      <!-- Chores -->
+      <div class="category-control">
+        <div class="cat-header">
+          <span class="cat-name">Chores / Clean Room</span>
+          <span class="cat-max">max 2</span>
+        </div>
+        <div class="btn-group" data-field="chores">
+          <button type="button" data-value="0">0</button>
+          <button type="button" data-value="1">1</button>
+          <button type="button" data-value="2">2</button>
+        </div>
+      </div>
+
+      <!-- Electronics Rules -->
+      <div class="category-control">
+        <div class="cat-header">
+          <span class="cat-name">Follow Electronics Rules</span>
+          <span class="cat-max">0 or 2</span>
+        </div>
+        <div class="btn-group" data-field="electronicsRules">
+          <button type="button" data-value="0">0</button>
+          <button type="button" data-value="2">2</button>
+        </div>
+      </div>
+
+      <!-- No Sneaking -->
+      <div class="category-control">
+        <div class="cat-header">
+          <span class="cat-name">No Sneaking / Stealing</span>
+          <span class="cat-max">0 or 2</span>
+        </div>
+        <div class="btn-group" data-field="noSneaking">
+          <button type="button" data-value="0">0</button>
+          <button type="button" data-value="2">2</button>
+        </div>
+      </div>
+
+      <!-- No Ditching -->
+      <div class="category-control">
+        <div class="cat-header">
+          <span class="cat-name">No Ditching / Stayed Where Expected</span>
+          <span class="cat-max">0 or 4</span>
+        </div>
+        <div class="btn-group" data-field="noDitching">
+          <button type="button" data-value="0">0</button>
+          <button type="button" data-value="4">4</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Recovery Bonus (separate) -->
+    <div class="card">
+      <h2>Recovery Bonus</h2>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">
+        Told the truth, corrected quickly, or owned a mistake
+      </div>
+      <div class="btn-group" data-field="recoveryBonus">
+        <button type="button" data-value="0">0</button>
+        <button type="button" data-value="1">+1</button>
+        <button type="button" data-value="2">+2</button>
+      </div>
+    </div>
+
+    <!-- Deal Breaker / Pause -->
+    <div class="card">
+      <h2>Deal Breakers & Pauses</h2>
+
+      <div class="toggle-row">
+        <div>
+          <div class="label">Deal Breaker Today</div>
+          <div class="sublabel">Ditching or sneaking/stealing</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-dealBreaker">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="label">Privileges Paused</div>
+          <div class="sublabel">Override: pause all privileges today</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-privilegesPaused">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card">
+      <h2>Notes</h2>
+      <textarea class="notes" id="notes" placeholder="Optional notes for this day..."></textarea>
+    </div>
+
+    <!-- Rolling 7-Day -->
+    <div class="card" style="text-align:center">
+      <div style="font-size:1.8rem;font-weight:700" id="rolling-total">0</div>
+      <div style="color:var(--muted);font-size:.9rem">Rolling 7-Day Total (max 70)</div>
+    </div>
+  </div>
+
+  <a href="index.html" class="nav-link">Teen View</a>
+
+  <script>
+    /* ── Passcode Gate ── */
+    (function() {
+      var CORRECT_PIN = '5719';
+      var overlay = document.getElementById('lock-overlay');
+      var inputs = overlay.querySelectorAll('.pin-inputs input');
+      var errorEl = document.getElementById('lock-error');
+
+      // Auto-focus first input
+      inputs[0].focus();
+
+      for (var i = 0; i < inputs.length; i++) {
+        (function(idx) {
+          inputs[idx].addEventListener('input', function(e) {
+            // Only allow digits
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length === 1 && idx < inputs.length - 1) {
+              inputs[idx + 1].focus();
+            }
+            // Check if all filled
+            checkPin();
+          });
+
+          inputs[idx].addEventListener('keydown', function(e) {
+            // Backspace moves to previous
+            if (e.key === 'Backspace' && this.value === '' && idx > 0) {
+              inputs[idx - 1].focus();
+              inputs[idx - 1].value = '';
+            }
+          });
+
+          // Allow paste of full code
+          inputs[idx].addEventListener('paste', function(e) {
+            e.preventDefault();
+            var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+            for (var j = 0; j < inputs.length && j < pasted.length; j++) {
+              inputs[j].value = pasted[j];
+            }
+            if (pasted.length >= inputs.length) {
+              inputs[inputs.length - 1].focus();
+            }
+            checkPin();
+          });
+        })(i);
+      }
+
+      function checkPin() {
+        var entered = '';
+        for (var i = 0; i < inputs.length; i++) {
+          entered += inputs[i].value;
+        }
+        if (entered.length === 4) {
+          if (entered === CORRECT_PIN) {
+            overlay.classList.add('hidden');
+          } else {
+            errorEl.textContent = 'Incorrect code';
+            for (var i = 0; i < inputs.length; i++) {
+              inputs[i].classList.add('error');
+              inputs[i].value = '';
+            }
+            inputs[0].focus();
+            setTimeout(function() {
+              errorEl.textContent = '';
+              for (var i = 0; i < inputs.length; i++) {
+                inputs[i].classList.remove('error');
+              }
+            }, 800);
+          }
+        }
+      }
+    })();
+
+    /* ── Data Layer (inlined) ── */
+    const STORAGE_KEY = 'adhd-privilege-tracker';
+    let _memoryStore = null;
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          try { return JSON.parse(raw); } catch(e) { /* fall through */ }
+        }
+      } catch(e) {
+        if (_memoryStore) return JSON.parse(JSON.stringify(_memoryStore));
+      }
+      return { days: {} };
+    }
+
+    function saveData(data) {
+      _memoryStore = data;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch(e) {
+        console.warn('localStorage unavailable, using in-memory storage');
+      }
+    }
+
+    function getTodayKey() {
+      const d = new Date();
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
+
+    function getDateKey(date) {
+      return date.getFullYear() + '-' +
+        String(date.getMonth() + 1).padStart(2, '0') + '-' +
+        String(date.getDate()).padStart(2, '0');
+    }
+
+    function getDayData(data, key) {
+      return data.days[key] || {
+        chores: 0, electronicsRules: 0, noSneaking: 0,
+        noDitching: 0, recoveryBonus: 0,
+        dealBreaker: false, privilegesPaused: false, notes: ''
+      };
+    }
+
+    function calculateTotal(day) {
+      return (day.chores || 0) + (day.electronicsRules || 0) +
+             (day.noSneaking || 0) + (day.noDitching || 0) +
+             (day.recoveryBonus || 0);
+    }
+
+    function calculateRolling7DayTotal(data, endKey) {
+      const end = new Date(endKey + 'T12:00:00');
+      let total = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(end);
+        d.setDate(d.getDate() - i);
+        const day = getDayData(data, getDateKey(d));
+        total += calculateTotal(day);
+      }
+      return total;
+    }
+
+    function formatDate(key) {
+      const d = new Date(key + 'T12:00:00');
+      return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    /* ── App State ── */
+    let currentDate = new Date(getTodayKey() + 'T12:00:00');
+
+    function currentKey() {
+      return getDateKey(currentDate);
+    }
+
+    function render() {
+      const data = loadData();
+      const key = currentKey();
+      const day = getDayData(data, key);
+      const baseTotal = (day.chores || 0) + (day.electronicsRules || 0) +
+                        (day.noSneaking || 0) + (day.noDitching || 0);
+      const recovery = day.recoveryBonus || 0;
+      const total = baseTotal + recovery;
+      const rolling7 = calculateRolling7DayTotal(data, key);
+
+      // Date display
+      const isToday = key === getTodayKey();
+      document.getElementById('current-date').textContent =
+        isToday ? 'Today' : formatDate(key);
+
+      // Disable next button if on today
+      document.getElementById('next-day').disabled = isToday;
+      document.getElementById('next-day').style.opacity = isToday ? '.3' : '1';
+
+      // Total — show base, with bonus highlighted separately
+      document.getElementById('day-total').textContent = baseTotal;
+      document.getElementById('day-bonus').textContent = recovery > 0 ? '+' + recovery + ' bonus' : '';
+
+      // Rolling
+      document.getElementById('rolling-total').textContent = rolling7;
+
+      // Button groups — highlight selected
+      document.querySelectorAll('.btn-group').forEach(function(group) {
+        var field = group.getAttribute('data-field');
+        var value = day[field] || 0;
+        var buttons = group.querySelectorAll('button');
+        for (var i = 0; i < buttons.length; i++) {
+          var btn = buttons[i];
+          if (parseInt(btn.getAttribute('data-value')) === value) {
+            btn.classList.add('selected');
+          } else {
+            btn.classList.remove('selected');
+          }
+        }
+      });
+
+      // Toggles
+      document.getElementById('toggle-dealBreaker').checked = day.dealBreaker;
+      document.getElementById('toggle-privilegesPaused').checked = day.privilegesPaused;
+
+      // Notes
+      document.getElementById('notes').value = day.notes || '';
+    }
+
+    function updateField(field, value) {
+      var data = loadData();
+      var key = currentKey();
+      if (!data.days[key]) {
+        data.days[key] = getDayData(data, key);
+      }
+      data.days[key][field] = value;
+      saveData(data);
+      render();
+    }
+
+    /* ── Wire up button clicks directly on each button ── */
+    var allButtons = document.querySelectorAll('.btn-group button');
+    for (var i = 0; i < allButtons.length; i++) {
+      (function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          var group = btn.parentElement;
+          var field = group.getAttribute('data-field');
+          var value = parseInt(btn.getAttribute('data-value'));
+          updateField(field, value);
+        });
+      })(allButtons[i]);
+    }
+
+    // Toggles
+    document.getElementById('toggle-dealBreaker').addEventListener('change', function(e) {
+      updateField('dealBreaker', e.target.checked);
+    });
+    document.getElementById('toggle-privilegesPaused').addEventListener('change', function(e) {
+      updateField('privilegesPaused', e.target.checked);
+    });
+
+    // Notes (debounced save)
+    var notesTimer;
+    document.getElementById('notes').addEventListener('input', function(e) {
+      clearTimeout(notesTimer);
+      notesTimer = setTimeout(function() {
+        updateField('notes', e.target.value);
+      }, 500);
+    });
+
+    // Date navigation
+    document.getElementById('prev-day').addEventListener('click', function() {
+      currentDate.setDate(currentDate.getDate() - 1);
+      render();
+    });
+    document.getElementById('next-day').addEventListener('click', function() {
+      var todayKey = getTodayKey();
+      var nextDate = new Date(currentDate);
+      nextDate.setDate(nextDate.getDate() + 1);
+      if (getDateKey(nextDate) <= todayKey) {
+        currentDate = nextDate;
+        render();
+      }
+    });
+
+    // Initial render
+    render();
+    console.log('Parent controls initialized successfully');
+  </script>
+</body>
+</html>

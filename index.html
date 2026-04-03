@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Progress</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3b82f6">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ── Stars ── */
+    .star-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .star-row:last-child { border-bottom: none; }
+    .star-row .name { font-size: .9rem; flex: 1; }
+    .stars {
+      display: flex;
+      gap: 3px;
+      font-size: 1.3rem;
+      line-height: 1;
+    }
+    .stars .star-filled { color: #facc15; filter: drop-shadow(0 0 2px rgba(250,204,21,.5)); }
+    .stars .star-empty { color: #e2e8f0; }
+
+    /* ── Rank Badge ── */
+    .rank-badge {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: .85rem;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+    .rank-rookie    { background: #f1f5f9; color: #64748b; }
+    .rank-rising    { background: #dbeafe; color: #2563eb; }
+    .rank-star      { background: #fef3c7; color: #d97706; }
+    .rank-legend    { background: #dcfce7; color: #16a34a; }
+    .rank-champion  { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #b45309; box-shadow: 0 0 12px rgba(250,204,21,.3); }
+
+    /* ── Streak ── */
+    .streak-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .streak-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .streak-row:last-child { border-bottom: none; }
+    .streak-row .streak-name { font-size: .9rem; }
+    .streak-row .streak-value {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 700;
+      font-size: .9rem;
+    }
+    .streak-row .streak-value.active { color: #c2410c; }
+    .streak-row .streak-value.inactive { color: var(--gray); }
+    .streak-row .flame { font-size: 1rem; }
+
+    /* ── Animations ── */
+    @keyframes starPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+    .star-filled { animation: starPop .3s ease; }
+
+    @keyframes rankGlow {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.15); }
+    }
+    .rank-champion { animation: rankGlow 2s ease-in-out infinite; }
+
+    /* ── Daily Progress Bar ── */
+    .daily-progress {
+      padding: 4px 0;
+    }
+    .daily-progress .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+    .daily-progress .progress-score {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+    .daily-progress .progress-score small {
+      font-size: .9rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+    .daily-progress .progress-score .bonus-pts {
+      color: #d97706;
+      font-size: 1rem;
+    }
+    .daily-progress .progress-track {
+      height: 20px;
+      background: var(--border);
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .daily-progress .progress-fill {
+      height: 100%;
+      border-radius: 10px 0 0 10px;
+      background: var(--green);
+      transition: width .5s ease;
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 2;
+    }
+    .daily-progress .bonus-fill {
+      height: 100%;
+      border-radius: 0 10px 10px 0;
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+      position: absolute;
+      top: 0;
+      z-index: 1;
+      transition: width .5s ease, left .5s ease;
+    }
+    .daily-progress .progress-fill.paused {
+      background: var(--amber);
+    }
+    .daily-progress .progress-notches {
+      position: relative;
+      height: 18px;
+      margin-top: 2px;
+      font-size: .65rem;
+      color: var(--muted);
+    }
+    .daily-progress .progress-notches span {
+      position: absolute;
+      transform: translateX(-50%);
+    }
+
+    /* ── Recovery Bonus Section ── */
+    .recovery-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius);
+      transition: all .3s ease;
+    }
+    .recovery-section.dormant {
+      background: var(--gray-bg);
+      color: var(--gray-text);
+    }
+    .recovery-section.earned {
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      color: #92400e;
+      box-shadow: 0 0 0 1px rgba(251,191,36,.3);
+    }
+    .recovery-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    .recovery-section.dormant .recovery-icon { opacity: .4; }
+    .recovery-info { flex: 1; }
+    .recovery-info .recovery-title {
+      font-weight: 700;
+      font-size: .9rem;
+      margin-bottom: 2px;
+    }
+    .recovery-info .recovery-desc {
+      font-size: .75rem;
+      line-height: 1.3;
+    }
+    .recovery-stars {
+      display: flex;
+      gap: 3px;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .recovery-stars .star-filled { color: #f59e0b; filter: drop-shadow(0 0 3px rgba(245,158,11,.5)); }
+    .recovery-stars .star-empty { color: #d1d5db; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>My Progress</h1>
+    </div>
+
+    <!-- Date Navigation -->
+    <div class="date-nav">
+      <button id="prev-day" type="button">&#8249;</button>
+      <span class="current-date" id="current-date"></span>
+      <button id="next-day" type="button">&#8250;</button>
+    </div>
+
+    <!-- Encouragement -->
+    <div class="encouragement" id="encouragement"></div>
+
+    <!-- Paused Alert -->
+    <div class="alert alert-paused" id="paused-alert" style="display:none">
+      Privileges paused for today
+    </div>
+
+    <!-- Daily Progress Bar -->
+    <div class="card">
+      <div class="daily-progress">
+        <div class="progress-header">
+          <span class="progress-score" id="score-display"></span>
+          <span id="rank-badge"></span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+          <div class="bonus-fill" id="bonus-fill" style="width:0%;left:0%"></div>
+        </div>
+        <div class="progress-notches">
+          <span style="left:16.7%">2</span>
+          <span style="left:50%">6</span>
+          <span style="left:83.3%">10</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Star Breakdown -->
+    <div class="card">
+      <h2>Today's Breakdown</h2>
+      <div id="breakdown"></div>
+    </div>
+
+    <!-- Recovery Bonus -->
+    <div class="card">
+      <div class="recovery-section dormant" id="recovery-section">
+        <div class="recovery-icon">&#x1F31F;</div>
+        <div class="recovery-info">
+          <div class="recovery-title">Recovery Bonus</div>
+          <div class="recovery-desc">Told the truth, corrected quickly, or owned a mistake</div>
+        </div>
+        <div class="recovery-stars" id="recovery-stars"></div>
+      </div>
+    </div>
+
+    <!-- Same-Day Privileges -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+        <h2 style="margin-bottom:0">Today's Privileges</h2>
+        <span id="daily-date" style="font-size:.8rem;color:var(--muted)"></span>
+      </div>
+      <div class="privilege-grid" id="daily-privileges"></div>
+    </div>
+
+    <!-- Weekly Privileges -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+        <h2 style="margin-bottom:0">Weekly Privileges</h2>
+        <span id="weekly-range" style="font-size:.8rem;color:var(--muted)"></span>
+      </div>
+      <div class="weekly-bar" id="weekly-bar"></div>
+      <div class="privilege-grid" id="weekly-privileges" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Streaks (bottom) -->
+    <div class="card">
+      <h2>Streaks</h2>
+      <div class="streak-section" id="streaks"></div>
+    </div>
+  </div>
+
+  <a href="parent.html" class="nav-link">Parent View</a>
+
+  <script>
+    /* ── Data Layer (inlined) ── */
+    var STORAGE_KEY = 'adhd-privilege-tracker';
+    var MAX_DAILY = 10;
+    var MAX_RECOVERY = 2;
+    var MAX_WEEKLY = 70;
+    var _memoryStore = null;
+
+    function loadData() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          try { return JSON.parse(raw); } catch(e) { /* fall through */ }
+        }
+      } catch(e) {
+        if (_memoryStore) return JSON.parse(JSON.stringify(_memoryStore));
+      }
+      return { days: {} };
+    }
+
+    function getTodayKey() {
+      var d = new Date();
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
+
+    function getDateKey(date) {
+      return date.getFullYear() + '-' +
+        String(date.getMonth() + 1).padStart(2, '0') + '-' +
+        String(date.getDate()).padStart(2, '0');
+    }
+
+    function getDayData(data, key) {
+      return data.days[key] || {
+        chores: 0, electronicsRules: 0, noSneaking: 0,
+        noDitching: 0, recoveryBonus: 0,
+        dealBreaker: false, privilegesPaused: false, notes: ''
+      };
+    }
+
+    function calculateBaseTotal(day) {
+      return (day.chores || 0) + (day.electronicsRules || 0) +
+             (day.noSneaking || 0) + (day.noDitching || 0);
+    }
+
+    function calculateTotal(day) {
+      return calculateBaseTotal(day) + (day.recoveryBonus || 0);
+    }
+
+    function calculateRolling7DayTotal(data, endKey) {
+      var end = new Date(endKey + 'T12:00:00');
+      var total = 0;
+      for (var i = 0; i < 7; i++) {
+        var d = new Date(end);
+        d.setDate(d.getDate() - i);
+        var day = getDayData(data, getDateKey(d));
+        total += calculateTotal(day);
+      }
+      return total;
+    }
+
+    function getPrivileges(todayTotal, rolling7, paused) {
+      return {
+        spotify: {
+          name: 'Spotify', icon: '\uD83C\uDFB5', type: 'daily',
+          threshold: 2, unlocked: !paused && todayTotal >= 2,
+          paused: paused && todayTotal >= 2, current: todayTotal
+        },
+        phone: {
+          name: 'Phone', icon: '\uD83D\uDCF1', type: 'daily',
+          threshold: 6, unlocked: !paused && todayTotal >= 6,
+          paused: paused && todayTotal >= 6, current: todayTotal
+        },
+        friendsHome: {
+          name: 'Friends at Home', icon: '\uD83C\uDFE0', type: 'weekly',
+          threshold: 30, unlocked: !paused && rolling7 >= 30,
+          paused: paused && rolling7 >= 30, current: rolling7
+        },
+        churchDance: {
+          name: 'Church Dance', icon: '\uD83D\uDC83', type: 'weekly',
+          threshold: 35, unlocked: !paused && rolling7 >= 35,
+          paused: paused && rolling7 >= 35, current: rolling7
+        },
+        friendsOut: {
+          name: 'Friends Out', icon: '\uD83D\uDE97', type: 'weekly',
+          threshold: 42, unlocked: !paused && rolling7 >= 42,
+          paused: paused && rolling7 >= 42, current: rolling7
+        }
+      };
+    }
+
+    function formatDateShort(key) {
+      var d = new Date(key + 'T12:00:00');
+      return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    function getEncouragement(total, max) {
+      var pct = total / max;
+      if (pct === 1) return "Perfect day! You're crushing it!";
+      if (pct >= 0.75) return "Great job today! Keep it up!";
+      if (pct >= 0.5) return "Solid progress \u2014 you're on track!";
+      if (pct >= 0.25) return "Good start! Every point counts!";
+      if (total > 0) return "You've started earning \u2014 keep going!";
+      return "New day, new chance. You've got this!";
+    }
+
+    /* ── Bunny Avatar ── */
+    function getBunnyMood(total) {
+      if (total >= 12) return 'champion';
+      if (total >= 8)  return 'legend';
+      if (total >= 5)  return 'happy';
+      if (total >= 2)  return 'hopeful';
+      return 'sleepy';
+    }
+
+    function getBunnyLabel(mood) {
+      var labels = {
+        sleepy: 'Zzz... waiting for points',
+        hopeful: 'Ears are perking up!',
+        happy: 'Feeling good!',
+        legend: 'So excited!',
+        champion: 'BEST DAY EVER!'
+      };
+      return labels[mood];
+    }
+
+    function renderBunnySVG(mood) {
+      // Body color shifts warmer as mood improves
+      var bodyColors = {
+        sleepy: '#e8ddd4', hopeful: '#f0e6dc',
+        happy: '#f5ede5', legend: '#faf0e6', champion: '#fff5eb'
+      };
+      var cheekColors = {
+        sleepy: 'transparent', hopeful: '#fecaca',
+        happy: '#fca5a5', legend: '#fb923c', champion: '#f97316'
+      };
+      var bodyFill = bodyColors[mood];
+      var cheekFill = cheekColors[mood];
+
+      // Ear inner color
+      var earInner = mood === 'champion' ? '#fbbf24' : '#f4c2c2';
+
+      // Eyes change based on mood
+      var eyesHTML = '';
+      if (mood === 'sleepy') {
+        // Closed/sleepy eyes — curved lines
+        eyesHTML =
+          '<path d="M52 62 Q56 58 60 62" stroke="#5a4a3a" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+          '<path d="M80 62 Q84 58 88 62" stroke="#5a4a3a" stroke-width="2" fill="none" stroke-linecap="round"/>';
+      } else if (mood === 'hopeful') {
+        // Small open eyes
+        eyesHTML =
+          '<circle cx="56" cy="60" r="4" fill="#5a4a3a"/>' +
+          '<circle cx="84" cy="60" r="4" fill="#5a4a3a"/>' +
+          '<circle cx="57.5" cy="58.5" r="1.2" fill="white"/>' +
+          '<circle cx="85.5" cy="58.5" r="1.2" fill="white"/>';
+      } else if (mood === 'happy') {
+        // Bigger bright eyes
+        eyesHTML =
+          '<circle cx="56" cy="59" r="5" fill="#5a4a3a"/>' +
+          '<circle cx="84" cy="59" r="5" fill="#5a4a3a"/>' +
+          '<circle cx="58" cy="57" r="2" fill="white"/>' +
+          '<circle cx="86" cy="57" r="2" fill="white"/>';
+      } else if (mood === 'legend') {
+        // Big sparkly eyes
+        eyesHTML =
+          '<circle cx="56" cy="58" r="6" fill="#5a4a3a"/>' +
+          '<circle cx="84" cy="58" r="6" fill="#5a4a3a"/>' +
+          '<circle cx="58" cy="55.5" r="2.5" fill="white"/>' +
+          '<circle cx="86" cy="55.5" r="2.5" fill="white"/>' +
+          '<circle cx="54" cy="60" r="1.2" fill="white"/>' +
+          '<circle cx="82" cy="60" r="1.2" fill="white"/>';
+      } else {
+        // Champion — star eyes!
+        eyesHTML =
+          '<polygon points="56,52 58,57 63,57 59,60 61,65 56,62 51,65 53,60 49,57 54,57" fill="#facc15"/>' +
+          '<polygon points="84,52 86,57 91,57 87,60 89,65 84,62 79,65 81,60 77,57 82,57" fill="#facc15"/>';
+      }
+
+      // Mouth changes
+      var mouthHTML = '';
+      if (mood === 'sleepy') {
+        // Tiny line
+        mouthHTML = '<line x1="66" y1="76" x2="74" y2="76" stroke="#5a4a3a" stroke-width="1.5" stroke-linecap="round"/>';
+      } else if (mood === 'hopeful') {
+        // Small smile
+        mouthHTML = '<path d="M64 74 Q70 80 76 74" stroke="#5a4a3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
+      } else if (mood === 'happy') {
+        // Open smile
+        mouthHTML = '<path d="M62 73 Q70 83 78 73" stroke="#5a4a3a" stroke-width="2" fill="none" stroke-linecap="round"/>';
+      } else if (mood === 'legend') {
+        // Big open grin
+        mouthHTML =
+          '<path d="M60 72 Q70 86 80 72" stroke="#5a4a3a" stroke-width="2" fill="#fff" stroke-linecap="round"/>' +
+          '<path d="M60 72 Q70 76 80 72" stroke="none" fill="' + bodyFill + '"/>';
+      } else {
+        // Champion — huge joyful open mouth
+        mouthHTML =
+          '<path d="M58 70 Q70 90 82 70" stroke="#5a4a3a" stroke-width="2" fill="#fff" stroke-linecap="round"/>' +
+          '<path d="M58 70 Q70 76 82 70" stroke="none" fill="' + bodyFill + '"/>' +
+          '<ellipse cx="70" cy="82" rx="5" ry="2.5" fill="#ff8fab"/>';
+      }
+
+      // Nose
+      var noseHTML = '<ellipse cx="70" cy="70" rx="3" ry="2" fill="#d4a0a0"/>';
+
+      // Whiskers (thicker for small render)
+      var whiskersHTML =
+        '<line x1="44" y1="68" x2="56" y2="69" stroke="#c4b5a5" stroke-width="1.5" stroke-linecap="round"/>' +
+        '<line x1="44" y1="73" x2="56" y2="72" stroke="#c4b5a5" stroke-width="1.5" stroke-linecap="round"/>' +
+        '<line x1="84" y1="69" x2="96" y2="68" stroke="#c4b5a5" stroke-width="1.5" stroke-linecap="round"/>' +
+        '<line x1="84" y1="72" x2="96" y2="73" stroke="#c4b5a5" stroke-width="1.5" stroke-linecap="round"/>';
+
+      // Sparkles for champion (small circles/stars that work at any size)
+      var sparklesHTML = '';
+      if (mood === 'champion') {
+        sparklesHTML =
+          '<circle cx="32" cy="28" r="3" fill="#facc15" opacity=".9"/>' +
+          '<circle cx="108" cy="24" r="2.5" fill="#facc15" opacity=".8"/>' +
+          '<circle cx="112" cy="48" r="2" fill="#fbbf24" opacity=".7"/>' +
+          '<circle cx="28" cy="52" r="2" fill="#fbbf24" opacity=".7"/>' +
+          '<polygon points="110,34 111.5,37 115,37 112,39 113,42 110,40 107,42 108,39 105,37 108.5,37" fill="#facc15" opacity=".8"/>' +
+          '<circle cx="30" cy="40" r="2" fill="#facc15" opacity=".6"/>';
+      }
+
+      return '<svg class="bunny-svg" viewBox="0 0 140 120" xmlns="http://www.w3.org/2000/svg">' +
+        // Left ear
+        '<ellipse cx="52" cy="22" rx="12" ry="24" fill="' + bodyFill + '" stroke="#d4c4b4" stroke-width="1"/>' +
+        '<ellipse cx="52" cy="22" rx="7" ry="18" fill="' + earInner + '"/>' +
+        // Right ear
+        '<ellipse cx="88" cy="22" rx="12" ry="24" fill="' + bodyFill + '" stroke="#d4c4b4" stroke-width="1"/>' +
+        '<ellipse cx="88" cy="22" rx="7" ry="18" fill="' + earInner + '"/>' +
+        // Head (main circle)
+        '<circle cx="70" cy="65" r="35" fill="' + bodyFill + '" stroke="#d4c4b4" stroke-width="1"/>' +
+        // Cheeks
+        '<circle cx="46" cy="70" r="7" fill="' + cheekFill + '" opacity=".5"/>' +
+        '<circle cx="94" cy="70" r="7" fill="' + cheekFill + '" opacity=".5"/>' +
+        // Eyes
+        eyesHTML +
+        // Nose
+        noseHTML +
+        // Whiskers
+        whiskersHTML +
+        // Mouth
+        mouthHTML +
+        // Sparkles
+        sparklesHTML +
+        '</svg>';
+    }
+
+    function renderBunny(total) {
+      var mood = getBunnyMood(total);
+      var wrap = document.getElementById('bunny-wrap');
+      wrap.className = 'card mood-' + mood;
+      document.getElementById('bunny-container').innerHTML = renderBunnySVG(mood);
+      document.getElementById('bunny-label').textContent = getBunnyLabel(mood);
+    }
+
+    /* ── Stars Helper ── */
+    function renderStars(earned, max) {
+      var html = '';
+      // For categories with max 4 (noDitching), show 4 stars where earning = all 4 lit
+      // For max 2 with 0-or-2 scoring, show 2 stars
+      // For max 2 with 0-1-2 scoring (chores, recovery), show 2 stars
+      var starCount = max;
+      // Map earned points to number of filled stars
+      var filled;
+      if (max === 4) {
+        // 0 or 4 scoring: 0 = no stars, 4 = all stars
+        filled = (earned >= 4) ? 4 : 0;
+      } else if (max === 2) {
+        filled = earned; // 0, 1, or 2
+      } else {
+        filled = earned;
+      }
+      for (var i = 0; i < starCount; i++) {
+        if (i < filled) {
+          html += '<span class="star-filled">\u2605</span>';
+        } else {
+          html += '<span class="star-empty">\u2605</span>';
+        }
+      }
+      return html;
+    }
+
+    /* ── Rank System ── */
+    function getRank(total) {
+      if (total > 10)  return { title: 'Overachiever', cls: 'rank-champion', icon: '\uD83E\uDD2F' };
+      if (total >= 10) return { title: 'Perfect', cls: 'rank-legend', icon: '\u2B50' };
+      if (total >= 6)  return { title: 'Rising Star', cls: 'rank-star', icon: '\uD83C\uDF1F' };
+      if (total >= 2)  return { title: 'On the Board', cls: 'rank-rising', icon: '\uD83D\uDE80' };
+      return { title: 'Just Getting Started', cls: 'rank-rookie', icon: '\uD83C\uDFAF' };
+    }
+
+    /* ── Streak Calculator ── */
+    function calculateStreaks(data, endKey) {
+      var categories = [
+        { field: 'chores', name: 'Chores', max: 2 },
+        { field: 'electronicsRules', name: 'Electronics', max: 2 },
+        { field: 'noSneaking', name: 'No Sneaking', max: 2 },
+        { field: 'noDitching', name: 'Stayed Put', max: 4 }
+      ];
+      var streaks = [];
+      for (var c = 0; c < categories.length; c++) {
+        var cat = categories[c];
+        var streak = 0;
+        var d = new Date(endKey + 'T12:00:00');
+        // Count consecutive days with max score, going backwards
+        for (var i = 0; i < 30; i++) {
+          var key = getDateKey(d);
+          var day = getDayData(data, key);
+          if ((day[cat.field] || 0) >= cat.max) {
+            streak++;
+            d.setDate(d.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+        streaks.push({ name: cat.name, count: streak });
+      }
+      // Also track "perfect day" streak
+      var perfectStreak = 0;
+      var pd = new Date(endKey + 'T12:00:00');
+      for (var i = 0; i < 30; i++) {
+        var key = getDateKey(pd);
+        var day = getDayData(data, key);
+        if (calculateBaseTotal(day) >= MAX_DAILY) {
+          perfectStreak++;
+          pd.setDate(pd.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      streaks.push({ name: 'Perfect Day', count: perfectStreak });
+      return streaks;
+    }
+
+    /* ── App State ── */
+    var currentDate = new Date(getTodayKey() + 'T12:00:00');
+
+    function currentKey() {
+      return getDateKey(currentDate);
+    }
+
+    /* ── Render ── */
+    function render() {
+      var data = loadData();
+      var key = currentKey();
+      var todayKey = getTodayKey();
+      var isToday = key === todayKey;
+      var day = getDayData(data, key);
+      var baseTotal = calculateBaseTotal(day);
+      var recovery = day.recoveryBonus || 0;
+      var total = baseTotal + recovery;
+      var rolling7 = calculateRolling7DayTotal(data, key);
+      var paused = day.dealBreaker || day.privilegesPaused;
+      var privs = getPrivileges(total, rolling7, paused);
+
+      // Date nav
+      document.getElementById('current-date').textContent =
+        isToday ? 'Today' : formatDateShort(key);
+      document.getElementById('next-day').disabled = isToday;
+      document.getElementById('next-day').style.opacity = isToday ? '.3' : '1';
+
+      // Encouragement
+      document.getElementById('encouragement').textContent = getEncouragement(total, MAX_DAILY);
+
+      // Paused alert
+      document.getElementById('paused-alert').style.display = paused ? 'block' : 'none';
+
+      // Score display
+      var scoreHtml = total + ' <small>/ ' + MAX_DAILY + ' pts</small>';
+      if (recovery > 0) {
+        scoreHtml += ' <span class="bonus-pts">+' + recovery + '</span>';
+      }
+      document.getElementById('score-display').innerHTML = scoreHtml;
+
+      // Progress bar — bar represents 12 total possible (10 base + 2 recovery)
+      var BAR_MAX = 12;
+      var basePct = (baseTotal / BAR_MAX) * 100;
+      var fill = document.getElementById('progress-fill');
+      fill.style.width = basePct + '%';
+      fill.className = 'progress-fill' + (paused ? ' paused' : '');
+
+      var bonusFill = document.getElementById('bonus-fill');
+      if (recovery > 0) {
+        var bonusPct = (recovery / BAR_MAX) * 100;
+        bonusFill.style.left = basePct + '%';
+        bonusFill.style.width = bonusPct + '%';
+        bonusFill.style.display = 'block';
+      } else {
+        bonusFill.style.display = 'none';
+      }
+
+      // Rank badge
+      var rank = getRank(total);
+      document.getElementById('rank-badge').innerHTML =
+        '<span class="rank-badge ' + rank.cls + '">' + rank.icon + ' ' + rank.title + '</span>';
+
+      // Star breakdown (base categories only)
+      var categories = [
+        { name: 'Chores / Clean Room', pts: day.chores, max: 2 },
+        { name: 'Electronics Rules', pts: day.electronicsRules, max: 2 },
+        { name: 'No Sneaking / Stealing', pts: day.noSneaking, max: 2 },
+        { name: 'Stayed Where Expected', pts: day.noDitching, max: 4 }
+      ];
+      var breakdownHtml = '';
+      for (var i = 0; i < categories.length; i++) {
+        var c = categories[i];
+        breakdownHtml += '<div class="star-row">' +
+          '<span class="name">' + c.name + '</span>' +
+          '<span class="stars">' + renderStars(c.pts, c.max) + '</span>' +
+          '</div>';
+      }
+      document.getElementById('breakdown').innerHTML = breakdownHtml;
+
+      // Recovery bonus section
+      var recSection = document.getElementById('recovery-section');
+      recSection.className = 'recovery-section ' + (recovery > 0 ? 'earned' : 'dormant');
+      var recStarsHtml = '';
+      for (var i = 0; i < MAX_RECOVERY; i++) {
+        if (i < recovery) {
+          recStarsHtml += '<span class="star-filled">\u2605</span>';
+        } else {
+          recStarsHtml += '<span class="star-empty">\u2605</span>';
+        }
+      }
+      document.getElementById('recovery-stars').innerHTML = recStarsHtml;
+
+      // Streaks
+      var streaks = calculateStreaks(data, key);
+      var streakHtml = '';
+      for (var i = 0; i < streaks.length; i++) {
+        var s = streaks[i];
+        var flames = '';
+        var cls = 'inactive';
+        if (s.count > 0) {
+          cls = 'active';
+          var flameCount = Math.min(3, Math.ceil(s.count / 2));
+          for (var f = 0; f < flameCount; f++) flames += '\uD83D\uDD25';
+        }
+        var label = s.count > 0
+          ? flames + ' ' + s.count + ' day' + (s.count > 1 ? 's' : '')
+          : '\u2014';
+        streakHtml += '<div class="streak-row">' +
+          '<span class="streak-name">' + s.name + '</span>' +
+          '<span class="streak-value ' + cls + '">' + label + '</span>' +
+          '</div>';
+      }
+      document.getElementById('streaks').innerHTML = streakHtml;
+
+      // Daily date
+      var dailyDate = new Date(key + 'T12:00:00');
+      document.getElementById('daily-date').textContent =
+        dailyDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      // Daily privileges
+      var dailyPrivs = [privs.spotify, privs.phone];
+      var dailyHtml = '';
+      for (var i = 0; i < dailyPrivs.length; i++) {
+        var p = dailyPrivs[i];
+        var cls = p.paused ? 'paused' : (p.unlocked ? 'unlocked' : 'locked');
+        var status = p.paused ? 'Paused' : (p.unlocked ? 'Unlocked!' : 'Need ' + p.threshold + ' pts');
+        dailyHtml += '<div class="badge ' + cls + '">' +
+          '<span class="icon">' + p.icon + '</span>' +
+          '<span>' + p.name + '</span>' +
+          '<span class="sub">' + status + '</span></div>';
+      }
+      document.getElementById('daily-privileges').innerHTML = dailyHtml;
+
+      // Weekly date range
+      var rangeEnd = new Date(key + 'T12:00:00');
+      var rangeStart = new Date(rangeEnd);
+      rangeStart.setDate(rangeStart.getDate() - 6);
+      var fmtOpts = { month: 'short', day: 'numeric' };
+      document.getElementById('weekly-range').textContent =
+        rangeStart.toLocaleDateString('en-US', fmtOpts) + ' \u2013 ' +
+        rangeEnd.toLocaleDateString('en-US', fmtOpts);
+
+      // Weekly bar
+      var weeklyPrivs = [privs.friendsHome, privs.churchDance, privs.friendsOut];
+      var barPct = Math.min(100, (rolling7 / MAX_WEEKLY) * 100);
+      var barColor = paused ? 'var(--amber)' : 'var(--green)';
+      document.getElementById('weekly-bar').innerHTML =
+        '<div style="font-size:1.4rem;font-weight:700;margin-bottom:6px">' +
+          rolling7 + ' <small style="font-size:.85rem;font-weight:400;color:var(--muted)">/ ' + MAX_WEEKLY + ' pts</small>' +
+        '</div>' +
+        '<div class="bar-track">' +
+          '<div class="bar-fill" style="width:' + barPct + '%;background:' + barColor + '"></div>' +
+        '</div>' +
+        '<div class="bar-markers">' +
+          '<span style="left:' + (30/MAX_WEEKLY*100) + '%">30</span>' +
+          '<span style="left:' + (35/MAX_WEEKLY*100) + '%">35</span>' +
+          '<span style="left:' + (42/MAX_WEEKLY*100) + '%">42</span>' +
+        '</div>';
+
+      // Weekly privileges
+      var weeklyHtml = '';
+      for (var i = 0; i < weeklyPrivs.length; i++) {
+        var p = weeklyPrivs[i];
+        var cls = p.paused ? 'paused' : (p.unlocked ? 'unlocked' : 'locked');
+        var needed = p.threshold - p.current;
+        var status = p.paused ? 'Paused' : (p.unlocked ? 'Unlocked!' : 'Need ' + needed + ' more');
+        weeklyHtml += '<div class="badge ' + cls + '">' +
+          '<span class="icon">' + p.icon + '</span>' +
+          '<span>' + p.name + '</span>' +
+          '<span class="sub">' + status + '</span></div>';
+      }
+      document.getElementById('weekly-privileges').innerHTML = weeklyHtml;
+    }
+
+    // Date navigation
+    document.getElementById('prev-day').addEventListener('click', function() {
+      currentDate.setDate(currentDate.getDate() - 1);
+      render();
+    });
+    document.getElementById('next-day').addEventListener('click', function() {
+      var todayKey = getTodayKey();
+      var nextDate = new Date(currentDate);
+      nextDate.setDate(nextDate.getDate() + 1);
+      if (getDateKey(nextDate) <= todayKey) {
+        currentDate = nextDate;
+        render();
+      }
+    });
+
+    render();
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) render();
+    });
+    setInterval(render, 30000);
+  </script>
+</body>
+</html>
