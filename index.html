@@ -270,7 +270,7 @@
         <h2 style="margin-bottom:0">Today's Privileges</h2>
         <span id="daily-date" style="font-size:.8rem;color:var(--muted)"></span>
       </div>
-      <div class="privilege-grid" id="daily-privileges"></div>
+      <div class="privilege-grid cols-3" id="daily-privileges"></div>
     </div>
 
     <!-- Weekly Privileges -->
@@ -425,10 +425,15 @@
           threshold: 2, unlocked: !paused && todayTotal >= 2,
           paused: paused && todayTotal >= 2, current: todayTotal
         },
-        phone: {
-          name: 'Phone', icon: '\uD83D\uDCF1', type: 'daily',
+        phone1hr: {
+          name: 'Phone (1 hr)', icon: '\uD83D\uDCF1', type: 'daily',
           threshold: 6, unlocked: !paused && todayTotal >= 6,
           paused: paused && todayTotal >= 6, current: todayTotal
+        },
+        phoneAllDay: {
+          name: 'Phone All Day', icon: '\uD83D\uDCF2', type: 'daily',
+          threshold: 10, unlocked: !paused && todayTotal >= 10,
+          paused: paused && todayTotal >= 10, current: todayTotal
         },
         friendsHome: {
           name: 'Friends at Home', icon: '\uD83C\uDFE0', type: 'weekly',
@@ -1056,7 +1061,7 @@
         dailyDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
       // Daily privileges
-      var dailyPrivs = [privs.spotify, privs.phone];
+      var dailyPrivs = [privs.spotify, privs.phone1hr, privs.phoneAllDay];
       var dailyHtml = '';
       for (var i = 0; i < dailyPrivs.length; i++) {
         var p = dailyPrivs[i];
