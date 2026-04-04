@@ -108,6 +108,9 @@ h2 { font-size: 1.1rem; font-weight: 600; color: var(--muted); margin-bottom: 8p
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+.privilege-grid.cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
 .badge {
   display: flex;
   flex-direction: column;
