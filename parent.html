@@ -95,62 +95,13 @@
     <!-- Today Total -->
     <div class="card" style="text-align:center">
       <div style="font-size:2rem;font-weight:700" id="day-total">0</div>
-      <div style="color:var(--muted);font-size:.9rem">Points Today (max 10) <span id="day-bonus" style="color:#d97706"></span></div>
+      <div style="color:var(--muted);font-size:.9rem">Points Today (max <span id="day-max">10</span>) <span id="day-bonus" style="color:#d97706"></span></div>
     </div>
 
-    <!-- Category Controls -->
+    <!-- Category Controls (generated dynamically) -->
     <div class="card">
       <h2>Score Categories</h2>
-
-      <!-- Chores -->
-      <div class="category-control">
-        <div class="cat-header">
-          <span class="cat-name">Chores / Clean Room</span>
-          <span class="cat-max">max 2</span>
-        </div>
-        <div class="btn-group" data-field="chores">
-          <button type="button" data-value="0">0</button>
-          <button type="button" data-value="1">1</button>
-          <button type="button" data-value="2">2</button>
-        </div>
-      </div>
-
-      <!-- Electronics Rules -->
-      <div class="category-control">
-        <div class="cat-header">
-          <span class="cat-name">Follow Electronics Rules</span>
-          <span class="cat-max">0 or 2</span>
-        </div>
-        <div class="btn-group" data-field="electronicsRules">
-          <button type="button" data-value="0">0</button>
-          <button type="button" data-value="2">2</button>
-        </div>
-      </div>
-
-      <!-- No Sneaking -->
-      <div class="category-control">
-        <div class="cat-header">
-          <span class="cat-name">No Sneaking / Stealing</span>
-          <span class="cat-max">0 or 2</span>
-        </div>
-        <div class="btn-group" data-field="noSneaking">
-          <button type="button" data-value="0">0</button>
-          <button type="button" data-value="2">2</button>
-        </div>
-      </div>
-
-      <!-- No Ditching -->
-      <div class="category-control">
-        <div class="cat-header">
-          <span class="cat-name">No Ditching / Stayed Where Expected</span>
-          <span class="cat-max">0 or 4</span>
-        </div>
-        <div class="btn-group" data-field="noDitching">
-          <button type="button" data-value="0">0</button>
-          <button type="button" data-value="4">4</button>
-        </div>
-      </div>
-
+      <div id="category-controls"></div>
     </div>
 
     <!-- Recovery Bonus (separate) -->
@@ -159,11 +110,7 @@
       <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">
         Told the truth, corrected quickly, or owned a mistake
       </div>
-      <div class="btn-group" data-field="recoveryBonus">
-        <button type="button" data-value="0">0</button>
-        <button type="button" data-value="1">+1</button>
-        <button type="button" data-value="2">+2</button>
-      </div>
+      <div id="recovery-control"></div>
     </div>
 
     <!-- Deal Breaker / Pause -->
@@ -360,17 +307,70 @@
         String(date.getDate()).padStart(2, '0');
     }
 
+    /* ── Category Definitions by Day Type ── */
+    var WEEKDAY_CATEGORIES = [
+      { field: 'chores', name: 'Chores / Clean Room', values: [0, 1, 2], max: 2, maxLabel: 'max 2' },
+      { field: 'electronicsRules', name: 'Follow Electronics Rules', values: [0, 2], max: 2, maxLabel: '0 or 2' },
+      { field: 'noSneaking', name: 'No Sneaking / Stealing', values: [0, 2], max: 2, maxLabel: '0 or 2' },
+      { field: 'noDitching', name: 'Stayed Where Expected', values: [0, 4], max: 4, maxLabel: '0 or 4' }
+    ];
+    var SATURDAY_CATEGORIES = [
+      { field: 'chores', name: 'Do Chores / Clean Room', values: [0, 1, 2], max: 2, maxLabel: 'max 2' },
+      { field: 'cleanLocker', name: 'Clean Your Locker', values: [0, 1, 2], max: 2, maxLabel: 'max 2' },
+      { field: 'practiceMusic', name: 'Practice Piano / Flute', values: [0, 1, 2], max: 2, maxLabel: 'max 2' },
+      { field: 'noSneaking', name: 'No Sneaking / Stealing', values: [0, 2], max: 2, maxLabel: '0 or 2' },
+      { field: 'earnMoney', name: 'Earn Money', values: [0, 1, 2, 3], max: 3, maxLabel: 'max 3' },
+      { field: 'noDitching', name: 'Stayed Where Expected', values: [0, 4], max: 4, maxLabel: '0 or 4' }
+    ];
+    var SUNDAY_CATEGORIES = [
+      { field: 'churchAttitude', name: 'Good Attitude Before Church', values: [0, 1, 2], max: 2, maxLabel: 'max 2' },
+      { field: 'sabbathActivity', name: 'Choose Good Sabbath Activity', values: [0, 1, 2], max: 2, maxLabel: 'max 2' },
+      { field: 'practiceMusic', name: 'Practice Piano / Flute', values: [0, 1, 2], max: 2, maxLabel: 'max 2' },
+      { field: 'noSneaking', name: 'No Sneaking / Stealing', values: [0, 2], max: 2, maxLabel: '0 or 2' },
+      { field: 'studyScriptures', name: 'Study Scriptures', values: [0, 1, 2, 3], max: 3, maxLabel: 'max 3' },
+      { field: 'noDitching', name: 'Stayed Where Expected', values: [0, 4], max: 4, maxLabel: '0 or 4' }
+    ];
+    var RECOVERY_CATEGORY = { field: 'recoveryBonus', values: [0, 1, 2], max: 2, labels: ['0', '+1', '+2'] };
+
+    function getCategoriesForDate(key) {
+      var d = new Date(key + 'T12:00:00');
+      var dow = d.getDay(); // 0=Sun, 6=Sat
+      if (dow === 6) return SATURDAY_CATEGORIES;
+      if (dow === 0) return SUNDAY_CATEGORIES;
+      return WEEKDAY_CATEGORIES;
+    }
+
+    function getMaxDailyForDate(key) {
+      var cats = getCategoriesForDate(key);
+      var total = 0;
+      for (var i = 0; i < cats.length; i++) total += cats[i].max;
+      return total;
+    }
+
     function getDayData(data, key) {
       return data.days[key] || {
         chores: 0, electronicsRules: 0, noSneaking: 0,
         noDitching: 0, recoveryBonus: 0,
+        cleanLocker: 0, practiceMusic: 0, earnMoney: 0,
+        churchAttitude: 0, sabbathActivity: 0, studyScriptures: 0,
         dealBreaker: false, privilegesPaused: false, notes: ''
       };
     }
 
+    function calculateBaseForDate(day, key) {
+      var cats = getCategoriesForDate(key);
+      var total = 0;
+      for (var i = 0; i < cats.length; i++) total += (day[cats[i].field] || 0);
+      return total;
+    }
+
     function calculateTotal(day) {
+      // Sum ALL possible scoring fields (for rolling 7-day which spans mixed day types)
       return (day.chores || 0) + (day.electronicsRules || 0) +
              (day.noSneaking || 0) + (day.noDitching || 0) +
+             (day.cleanLocker || 0) + (day.practiceMusic || 0) +
+             (day.earnMoney || 0) + (day.churchAttitude || 0) +
+             (day.sabbathActivity || 0) + (day.studyScriptures || 0) +
              (day.recoveryBonus || 0);
     }
 
@@ -398,34 +398,111 @@
       return getDateKey(currentDate);
     }
 
+    var _lastRenderedDayType = '';
+
     function render() {
-      const data = loadData();
-      const key = currentKey();
-      const day = getDayData(data, key);
-      const baseTotal = (day.chores || 0) + (day.electronicsRules || 0) +
-                        (day.noSneaking || 0) + (day.noDitching || 0);
-      const recovery = day.recoveryBonus || 0;
-      const total = baseTotal + recovery;
-      const rolling7 = calculateRolling7DayTotal(data, key);
+      var data = loadData();
+      var key = currentKey();
+      var day = getDayData(data, key);
+      var cats = getCategoriesForDate(key);
+      var maxDaily = getMaxDailyForDate(key);
+      var baseTotal = calculateBaseForDate(day, key);
+      var recovery = day.recoveryBonus || 0;
+      var total = baseTotal + recovery;
+      var rolling7 = calculateRolling7DayTotal(data, key);
 
       // Date display
-      const isToday = key === getTodayKey();
+      var isToday = key === getTodayKey();
       document.getElementById('current-date').textContent =
         isToday ? 'Today' : formatDate(key);
 
-      // Disable next button if on today
       document.getElementById('next-day').disabled = isToday;
       document.getElementById('next-day').style.opacity = isToday ? '.3' : '1';
 
-      // Total — show base, with bonus highlighted separately
+      // Total
       document.getElementById('day-total').textContent = baseTotal;
+      document.getElementById('day-max').textContent = maxDaily;
       document.getElementById('day-bonus').textContent = recovery > 0 ? '+' + recovery + ' bonus' : '';
 
       // Rolling
       document.getElementById('rolling-total').textContent = rolling7;
 
-      // Button groups — highlight selected
-      document.querySelectorAll('.btn-group').forEach(function(group) {
+      // Determine day type for category rebuild
+      var d = new Date(key + 'T12:00:00');
+      var dayType = d.getDay() === 6 ? 'sat' : (d.getDay() === 0 ? 'sun' : 'wk');
+      if (dayType !== _lastRenderedDayType) {
+        _lastRenderedDayType = dayType;
+        buildCategoryControls(cats, day);
+        buildRecoveryControl(day);
+      } else {
+        // Just update selected states
+        highlightButtons(day);
+      }
+
+      // Toggles
+      document.getElementById('toggle-dealBreaker').checked = day.dealBreaker;
+      document.getElementById('toggle-privilegesPaused').checked = day.privilegesPaused;
+
+      // Notes
+      document.getElementById('notes').value = day.notes || '';
+    }
+
+    function buildCategoryControls(cats, day) {
+      var container = document.getElementById('category-controls');
+      var html = '';
+      for (var i = 0; i < cats.length; i++) {
+        var c = cats[i];
+        html += '<div class="category-control">' +
+          '<div class="cat-header">' +
+            '<span class="cat-name">' + c.name + '</span>' +
+            '<span class="cat-max">' + c.maxLabel + '</span>' +
+          '</div>' +
+          '<div class="btn-group" data-field="' + c.field + '">';
+        for (var v = 0; v < c.values.length; v++) {
+          var val = c.values[v];
+          var selected = (day[c.field] || 0) === val ? ' selected' : '';
+          html += '<button type="button" data-value="' + val + '" class="' + selected + '">' + val + '</button>';
+        }
+        html += '</div></div>';
+      }
+      container.innerHTML = html;
+      wireUpButtons(container);
+    }
+
+    function buildRecoveryControl(day) {
+      var container = document.getElementById('recovery-control');
+      var rc = RECOVERY_CATEGORY;
+      var html = '<div class="btn-group" data-field="' + rc.field + '">';
+      for (var v = 0; v < rc.values.length; v++) {
+        var val = rc.values[v];
+        var label = rc.labels[v];
+        var selected = (day[rc.field] || 0) === val ? ' selected' : '';
+        html += '<button type="button" data-value="' + val + '" class="' + selected + '">' + label + '</button>';
+      }
+      html += '</div>';
+      container.innerHTML = html;
+      wireUpButtons(container);
+    }
+
+    function wireUpButtons(container) {
+      var buttons = container.querySelectorAll('.btn-group button');
+      for (var i = 0; i < buttons.length; i++) {
+        (function(btn) {
+          btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var group = btn.parentElement;
+            var field = group.getAttribute('data-field');
+            var value = parseInt(btn.getAttribute('data-value'));
+            updateField(field, value);
+          });
+        })(buttons[i]);
+      }
+    }
+
+    function highlightButtons(day) {
+      var groups = document.querySelectorAll('.btn-group');
+      for (var g = 0; g < groups.length; g++) {
+        var group = groups[g];
         var field = group.getAttribute('data-field');
         var value = day[field] || 0;
         var buttons = group.querySelectorAll('button');
@@ -437,14 +514,7 @@
             btn.classList.remove('selected');
           }
         }
-      });
-
-      // Toggles
-      document.getElementById('toggle-dealBreaker').checked = day.dealBreaker;
-      document.getElementById('toggle-privilegesPaused').checked = day.privilegesPaused;
-
-      // Notes
-      document.getElementById('notes').value = day.notes || '';
+      }
     }
 
     function updateField(field, value) {
@@ -458,19 +528,7 @@
       render();
     }
 
-    /* ── Wire up button clicks directly on each button ── */
-    var allButtons = document.querySelectorAll('.btn-group button');
-    for (var i = 0; i < allButtons.length; i++) {
-      (function(btn) {
-        btn.addEventListener('click', function(e) {
-          e.preventDefault();
-          var group = btn.parentElement;
-          var field = group.getAttribute('data-field');
-          var value = parseInt(btn.getAttribute('data-value'));
-          updateField(field, value);
-        });
-      })(allButtons[i]);
-    }
+    /* Button clicks are wired up dynamically in buildCategoryControls/buildRecoveryControl */
 
     // Toggles
     document.getElementById('toggle-dealBreaker').addEventListener('change', function(e) {
@@ -489,9 +547,10 @@
       }, 500);
     });
 
-    // Date navigation
+    // Date navigation — reset day type so categories rebuild
     document.getElementById('prev-day').addEventListener('click', function() {
       currentDate.setDate(currentDate.getDate() - 1);
+      _lastRenderedDayType = '';
       render();
     });
     document.getElementById('next-day').addEventListener('click', function() {
@@ -500,6 +559,7 @@
       nextDate.setDate(nextDate.getDate() + 1);
       if (getDateKey(nextDate) <= todayKey) {
         currentDate = nextDate;
+        _lastRenderedDayType = '';
         render();
       }
     });

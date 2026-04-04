@@ -299,9 +299,7 @@
     /* ── Cloud Sync (Google Apps Script) ── */
     var CLOUD_URL = 'https://script.google.com/macros/s/AKfycbxV6VNfQkEmXdh3kXjg3R1R8intLpsnKrIpbO_5V5kyjhkeXrzsYzUmu3RxfbkSOeW4/exec';
     var STORAGE_KEY = 'adhd-privilege-tracker';
-    var MAX_DAILY = 10;
     var MAX_RECOVERY = 2;
-    var MAX_WEEKLY = 70;
     var _memoryStore = null;
     var _cloudData = null;
 
@@ -344,21 +342,69 @@
         String(date.getDate()).padStart(2, '0');
     }
 
+    /* ── Category Definitions by Day Type ── */
+    var WEEKDAY_CATEGORIES = [
+      { field: 'chores', name: 'Chores / Clean Room', max: 2 },
+      { field: 'electronicsRules', name: 'Electronics Rules', max: 2 },
+      { field: 'noSneaking', name: 'No Sneaking / Stealing', max: 2 },
+      { field: 'noDitching', name: 'Stayed Where Expected', max: 4 }
+    ];
+    var SATURDAY_CATEGORIES = [
+      { field: 'chores', name: 'Do Chores / Clean Room', max: 2 },
+      { field: 'cleanLocker', name: 'Clean Your Locker', max: 2 },
+      { field: 'practiceMusic', name: 'Practice Piano / Flute', max: 2 },
+      { field: 'noSneaking', name: 'No Sneaking / Stealing', max: 2 },
+      { field: 'earnMoney', name: 'Earn Money', max: 3 },
+      { field: 'noDitching', name: 'Stayed Where Expected', max: 4 }
+    ];
+    var SUNDAY_CATEGORIES = [
+      { field: 'churchAttitude', name: 'Good Attitude Before Church', max: 2 },
+      { field: 'sabbathActivity', name: 'Good Sabbath Activity', max: 2 },
+      { field: 'practiceMusic', name: 'Practice Piano / Flute', max: 2 },
+      { field: 'noSneaking', name: 'No Sneaking / Stealing', max: 2 },
+      { field: 'studyScriptures', name: 'Study Scriptures', max: 3 },
+      { field: 'noDitching', name: 'Stayed Where Expected', max: 4 }
+    ];
+
+    function getCategoriesForDate(key) {
+      var d = new Date(key + 'T12:00:00');
+      var dow = d.getDay();
+      if (dow === 6) return SATURDAY_CATEGORIES;
+      if (dow === 0) return SUNDAY_CATEGORIES;
+      return WEEKDAY_CATEGORIES;
+    }
+
+    function getMaxDailyForDate(key) {
+      var cats = getCategoriesForDate(key);
+      var total = 0;
+      for (var i = 0; i < cats.length; i++) total += cats[i].max;
+      return total;
+    }
+
     function getDayData(data, key) {
       return data.days[key] || {
         chores: 0, electronicsRules: 0, noSneaking: 0,
         noDitching: 0, recoveryBonus: 0,
+        cleanLocker: 0, practiceMusic: 0, earnMoney: 0,
+        churchAttitude: 0, sabbathActivity: 0, studyScriptures: 0,
         dealBreaker: false, privilegesPaused: false, notes: ''
       };
     }
 
-    function calculateBaseTotal(day) {
-      return (day.chores || 0) + (day.electronicsRules || 0) +
-             (day.noSneaking || 0) + (day.noDitching || 0);
+    function calculateBaseForDate(day, key) {
+      var cats = getCategoriesForDate(key);
+      var total = 0;
+      for (var i = 0; i < cats.length; i++) total += (day[cats[i].field] || 0);
+      return total;
     }
 
     function calculateTotal(day) {
-      return calculateBaseTotal(day) + (day.recoveryBonus || 0);
+      return (day.chores || 0) + (day.electronicsRules || 0) +
+             (day.noSneaking || 0) + (day.noDitching || 0) +
+             (day.cleanLocker || 0) + (day.practiceMusic || 0) +
+             (day.earnMoney || 0) + (day.churchAttitude || 0) +
+             (day.sabbathActivity || 0) + (day.studyScriptures || 0) +
+             (day.recoveryBonus || 0);
     }
 
     function calculateRolling7DayTotal(data, endKey) {
@@ -822,9 +868,8 @@
       if (max === 4) {
         // 0 or 4 scoring: 0 = no stars, 4 = all stars
         filled = (earned >= 4) ? 4 : 0;
-      } else if (max === 2) {
-        filled = earned; // 0, 1, or 2
       } else {
+        // 2-point or 3-point categories: 1 star per point
         filled = earned;
       }
       for (var i = 0; i < starCount; i++) {
@@ -838,32 +883,37 @@
     }
 
     /* ── Rank System ── */
-    function getRank(total) {
-      if (total > 10)  return { title: 'Overachiever', cls: 'rank-champion', icon: '\uD83E\uDD2F' };
-      if (total >= 10) return { title: 'Perfect', cls: 'rank-legend', icon: '\u2B50' };
-      if (total >= 6)  return { title: 'Rising Star', cls: 'rank-star', icon: '\uD83C\uDF1F' };
-      if (total >= 2)  return { title: 'On the Board', cls: 'rank-rising', icon: '\uD83D\uDE80' };
+    function getRank(total, maxDaily) {
+      var m = maxDaily || 10;
+      if (total > m)        return { title: 'Overachiever', cls: 'rank-champion', icon: '\uD83E\uDD2F' };
+      if (total >= m)       return { title: 'Perfect', cls: 'rank-legend', icon: '\u2B50' };
+      if (total >= m * 0.6) return { title: 'Rising Star', cls: 'rank-star', icon: '\uD83C\uDF1F' };
+      if (total >= m * 0.2) return { title: 'On the Board', cls: 'rank-rising', icon: '\uD83D\uDE80' };
       return { title: 'Just Getting Started', cls: 'rank-rookie', icon: '\uD83C\uDFAF' };
     }
 
     /* ── Streak Calculator ── */
     function calculateStreaks(data, endKey) {
-      var categories = [
-        { field: 'chores', name: 'Chores', max: 2 },
-        { field: 'electronicsRules', name: 'Electronics', max: 2 },
+      // Track streaks for categories that exist across all day types
+      var streakFields = [
         { field: 'noSneaking', name: 'No Sneaking', max: 2 },
         { field: 'noDitching', name: 'Stayed Put', max: 4 }
       ];
       var streaks = [];
-      for (var c = 0; c < categories.length; c++) {
-        var cat = categories[c];
+      for (var c = 0; c < streakFields.length; c++) {
+        var cat = streakFields[c];
         var streak = 0;
         var d = new Date(endKey + 'T12:00:00');
-        // Count consecutive days with max score, going backwards
         for (var i = 0; i < 30; i++) {
-          var key = getDateKey(d);
-          var day = getDayData(data, key);
-          if ((day[cat.field] || 0) >= cat.max) {
+          var k = getDateKey(d);
+          var day = getDayData(data, k);
+          // Only count if this field is relevant for that day type
+          var dayCats = getCategoriesForDate(k);
+          var relevant = false;
+          for (var j = 0; j < dayCats.length; j++) {
+            if (dayCats[j].field === cat.field) { relevant = true; break; }
+          }
+          if (relevant && (day[cat.field] || 0) >= cat.max) {
             streak++;
             d.setDate(d.getDate() - 1);
           } else {
@@ -872,13 +922,13 @@
         }
         streaks.push({ name: cat.name, count: streak });
       }
-      // Also track "perfect day" streak
+      // Perfect day streak — base == max for that specific day's categories
       var perfectStreak = 0;
       var pd = new Date(endKey + 'T12:00:00');
       for (var i = 0; i < 30; i++) {
-        var key = getDateKey(pd);
-        var day = getDayData(data, key);
-        if (calculateBaseTotal(day) >= MAX_DAILY) {
+        var k = getDateKey(pd);
+        var day = getDayData(data, k);
+        if (calculateBaseForDate(day, k) >= getMaxDailyForDate(k)) {
           perfectStreak++;
           pd.setDate(pd.getDate() - 1);
         } else {
@@ -903,7 +953,9 @@
       var todayKey = getTodayKey();
       var isToday = key === todayKey;
       var day = getDayData(data, key);
-      var baseTotal = calculateBaseTotal(day);
+      var cats = getCategoriesForDate(key);
+      var MAX_DAILY = getMaxDailyForDate(key);
+      var baseTotal = calculateBaseForDate(day, key);
       var recovery = day.recoveryBonus || 0;
       var total = baseTotal + recovery;
       var rolling7 = calculateRolling7DayTotal(data, key);
@@ -929,8 +981,8 @@
       }
       document.getElementById('score-display').innerHTML = scoreHtml;
 
-      // Progress bar — 10 wide normally, stretches to 12 when bonus earned
-      var BAR_MAX = recovery > 0 ? 12 : 10;
+      // Progress bar — stretches when bonus earned
+      var BAR_MAX = recovery > 0 ? (MAX_DAILY + MAX_RECOVERY) : MAX_DAILY;
       var basePct = (baseTotal / BAR_MAX) * 100;
       var fill = document.getElementById('progress-fill');
       fill.style.width = basePct + '%';
@@ -946,31 +998,25 @@
         bonusFill.style.display = 'none';
       }
 
-      // Update notch positions to match bar scale
+      // Update notch positions — show Spotify (2), Phone (6), and max
       var notches = document.getElementById('progress-notches');
       notches.innerHTML =
         '<span style="left:' + (2/BAR_MAX*100) + '%">2</span>' +
         '<span style="left:' + (6/BAR_MAX*100) + '%">6</span>' +
-        '<span style="left:' + (10/BAR_MAX*100) + '%">10</span>';
+        '<span style="left:' + (MAX_DAILY/BAR_MAX*100) + '%">' + MAX_DAILY + '</span>';
 
       // Rank badge
-      var rank = getRank(total);
+      var rank = getRank(total, MAX_DAILY);
       document.getElementById('rank-badge').innerHTML =
         '<span class="rank-badge ' + rank.cls + '">' + rank.icon + ' ' + rank.title + '</span>';
 
-      // Star breakdown (base categories only)
-      var categories = [
-        { name: 'Chores / Clean Room', pts: day.chores, max: 2 },
-        { name: 'Electronics Rules', pts: day.electronicsRules, max: 2 },
-        { name: 'No Sneaking / Stealing', pts: day.noSneaking, max: 2 },
-        { name: 'Stayed Where Expected', pts: day.noDitching, max: 4 }
-      ];
+      // Star breakdown (dynamic based on day type)
       var breakdownHtml = '';
-      for (var i = 0; i < categories.length; i++) {
-        var c = categories[i];
+      for (var i = 0; i < cats.length; i++) {
+        var c = cats[i];
         breakdownHtml += '<div class="star-row">' +
           '<span class="name">' + c.name + '</span>' +
-          '<span class="stars">' + renderStars(c.pts, c.max) + '</span>' +
+          '<span class="stars">' + renderStars(day[c.field] || 0, c.max) + '</span>' +
           '</div>';
       }
       document.getElementById('breakdown').innerHTML = breakdownHtml;
@@ -1038,8 +1084,15 @@
         rangeStart.toLocaleDateString('en-US', fmtOpts) + ' \u2013 ' +
         rangeEnd.toLocaleDateString('en-US', fmtOpts);
 
-      // Weekly bar
+      // Weekly bar — compute actual 7-day max (varies with weekday/weekend mix)
       var weeklyPrivs = [privs.friendsHome, privs.churchDance, privs.friendsOut];
+      var MAX_WEEKLY = 0;
+      var wd = new Date(key + 'T12:00:00');
+      for (var wi = 0; wi < 7; wi++) {
+        var wk = getDateKey(wd);
+        MAX_WEEKLY += getMaxDailyForDate(wk);
+        wd.setDate(wd.getDate() - 1);
+      }
       var barPct = Math.min(100, (rolling7 / MAX_WEEKLY) * 100);
       var barColor = paused ? 'var(--amber)' : 'var(--green)';
       document.getElementById('weekly-bar').innerHTML =
