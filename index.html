@@ -222,10 +222,10 @@
           <div class="progress-fill" id="progress-fill" style="width:0%"></div>
           <div class="bonus-fill" id="bonus-fill" style="width:0%;left:0%"></div>
         </div>
-        <div class="progress-notches">
-          <span style="left:16.7%">2</span>
-          <span style="left:50%">6</span>
-          <span style="left:83.3%">10</span>
+        <div class="progress-notches" id="progress-notches">
+          <span style="left:20%">2</span>
+          <span style="left:60%">6</span>
+          <span style="left:100%">10</span>
         </div>
       </div>
     </div>
@@ -654,8 +654,8 @@
       }
       document.getElementById('score-display').innerHTML = scoreHtml;
 
-      // Progress bar — bar represents 12 total possible (10 base + 2 recovery)
-      var BAR_MAX = 12;
+      // Progress bar — 10 wide normally, stretches to 12 when bonus earned
+      var BAR_MAX = recovery > 0 ? 12 : 10;
       var basePct = (baseTotal / BAR_MAX) * 100;
       var fill = document.getElementById('progress-fill');
       fill.style.width = basePct + '%';
@@ -670,6 +670,13 @@
       } else {
         bonusFill.style.display = 'none';
       }
+
+      // Update notch positions to match bar scale
+      var notches = document.getElementById('progress-notches');
+      notches.innerHTML =
+        '<span style="left:' + (2/BAR_MAX*100) + '%">2</span>' +
+        '<span style="left:' + (6/BAR_MAX*100) + '%">6</span>' +
+        '<span style="left:' + (10/BAR_MAX*100) + '%">10</span>';
 
       // Rank badge
       var rank = getRank(total);
@@ -811,4 +818,3 @@
   </script>
 </body>
 </html>
-
