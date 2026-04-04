@@ -145,17 +145,21 @@
     .daily-progress .progress-fill.paused {
       background: var(--amber);
     }
-    .daily-progress .progress-notches {
-      position: relative;
-      height: 18px;
-      margin-top: 2px;
-      font-size: .65rem;
+    .daily-progress .progress-scale {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: .6rem;
       color: var(--muted);
+      padding: 0 1px;
     }
-    .daily-progress .progress-notches span {
-      position: absolute;
-      transform: translateX(-50%);
+    .daily-progress .progress-scale span {
+      width: 0;
+      text-align: center;
+      flex-shrink: 0;
     }
+    .daily-progress .progress-scale span:first-child { text-align: left; }
+    .daily-progress .progress-scale span:last-child { text-align: right; }
 
     /* ── Recovery Bonus Section ── */
     .recovery-section {
@@ -239,11 +243,7 @@
           <div class="progress-fill" id="progress-fill" style="width:0%"></div>
           <div class="bonus-fill" id="bonus-fill" style="width:0%;left:0%"></div>
         </div>
-        <div class="progress-notches" id="progress-notches">
-          <span style="left:20%">2</span>
-          <span style="left:60%">6</span>
-          <span style="left:100%">10</span>
-        </div>
+        <div class="progress-scale" id="progress-scale"></div>
       </div>
     </div>
 
@@ -998,12 +998,12 @@
         bonusFill.style.display = 'none';
       }
 
-      // Update notch positions — show Spotify (2), Phone (6), and max
-      var notches = document.getElementById('progress-notches');
-      notches.innerHTML =
-        '<span style="left:' + (2/BAR_MAX*100) + '%">2</span>' +
-        '<span style="left:' + (6/BAR_MAX*100) + '%">6</span>' +
-        '<span style="left:' + (MAX_DAILY/BAR_MAX*100) + '%">' + MAX_DAILY + '</span>';
+      // Numbered scale under daily progress bar
+      var scaleHtml = '';
+      for (var n = 0; n <= BAR_MAX; n++) {
+        scaleHtml += '<span>' + n + '</span>';
+      }
+      document.getElementById('progress-scale').innerHTML = scaleHtml;
 
       // Rank badge
       var rank = getRank(total, MAX_DAILY);
@@ -1095,6 +1095,11 @@
       }
       var barPct = Math.min(100, (rolling7 / MAX_WEEKLY) * 100);
       var barColor = paused ? 'var(--amber)' : 'var(--green)';
+      // Build weekly scale (ticks every 5)
+      var weeklyScaleHtml = '';
+      for (var wn = 0; wn <= MAX_WEEKLY; wn += 5) {
+        weeklyScaleHtml += '<span>' + wn + '</span>';
+      }
       document.getElementById('weekly-bar').innerHTML =
         '<div style="font-size:1.4rem;font-weight:700;margin-bottom:6px">' +
           rolling7 + ' <small style="font-size:.85rem;font-weight:400;color:var(--muted)">/ ' + MAX_WEEKLY + ' pts</small>' +
@@ -1102,11 +1107,7 @@
         '<div class="bar-track">' +
           '<div class="bar-fill" style="width:' + barPct + '%;background:' + barColor + '"></div>' +
         '</div>' +
-        '<div class="bar-markers">' +
-          '<span style="left:' + (30/MAX_WEEKLY*100) + '%">30</span>' +
-          '<span style="left:' + (35/MAX_WEEKLY*100) + '%">35</span>' +
-          '<span style="left:' + (42/MAX_WEEKLY*100) + '%">42</span>' +
-        '</div>';
+        '<div class="weekly-scale">' + weeklyScaleHtml + '</div>';
 
       // Weekly privileges
       var weeklyHtml = '';

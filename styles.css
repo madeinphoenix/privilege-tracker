@@ -145,17 +145,21 @@ h2 { font-size: 1.1rem; font-weight: 600; color: var(--muted); margin-bottom: 8p
   border-radius: 6px;
   transition: width .6s ease;
 }
-.weekly-bar .bar-markers {
-  position: relative;
-  height: 20px;
-  margin-top: 2px;
-  font-size: .7rem;
+.weekly-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: .6rem;
   color: var(--muted);
+  padding: 0 1px;
 }
-.weekly-bar .bar-markers span {
-  position: absolute;
-  transform: translateX(-50%);
+.weekly-scale span {
+  width: 0;
+  text-align: center;
+  flex-shrink: 0;
 }
+.weekly-scale span:first-child { text-align: left; }
+.weekly-scale span:last-child { text-align: right; }
 .weekly-bar .bar-label {
   display: flex;
   justify-content: space-between;
