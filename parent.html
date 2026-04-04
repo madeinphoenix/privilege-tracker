@@ -71,7 +71,7 @@
       <h2>Parent Access</h2>
       <p>Enter the 4-digit code to continue</p>
       <div class="pin-inputs">
-        <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+        <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" autofocus>
         <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
         <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
         <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
@@ -162,36 +162,55 @@
       var overlay = document.getElementById('lock-overlay');
       var inputs = overlay.querySelectorAll('.pin-inputs input');
       var errorEl = document.getElementById('lock-error');
+      var pinValues = ['', '', '', ''];
 
-      // Auto-focus first input
-      inputs[0].focus();
+      // Auto-focus and open keyboard on mobile
+      setTimeout(function() { inputs[0].focus(); }, 100);
 
       for (var i = 0; i < inputs.length; i++) {
         (function(idx) {
           inputs[idx].addEventListener('input', function(e) {
-            // Only allow digits
             this.value = this.value.replace(/[^0-9]/g, '');
-            if (this.value.length === 1 && idx < inputs.length - 1) {
-              inputs[idx + 1].focus();
+            if (this.value.length === 1) {
+              pinValues[idx] = this.value;
+              if (idx < inputs.length - 1) {
+                // Mask current digit and move to next
+                var self = this;
+                setTimeout(function() {
+                  self.value = '\u2022';
+                  inputs[idx + 1].focus();
+                }, 150);
+              }
+              checkPin();
             }
-            // Check if all filled
-            checkPin();
           });
 
           inputs[idx].addEventListener('keydown', function(e) {
-            // Backspace moves to previous
-            if (e.key === 'Backspace' && this.value === '' && idx > 0) {
-              inputs[idx - 1].focus();
-              inputs[idx - 1].value = '';
+            if (e.key === 'Backspace') {
+              if (this.value === '' && idx > 0) {
+                pinValues[idx - 1] = '';
+                inputs[idx - 1].value = '';
+                inputs[idx - 1].focus();
+              } else {
+                pinValues[idx] = '';
+                this.value = '';
+              }
             }
           });
 
-          // Allow paste of full code
+          inputs[idx].addEventListener('focus', function() {
+            // Show actual digit briefly when focused
+            if (pinValues[idx]) {
+              this.value = pinValues[idx];
+            }
+          });
+
           inputs[idx].addEventListener('paste', function(e) {
             e.preventDefault();
             var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
             for (var j = 0; j < inputs.length && j < pasted.length; j++) {
-              inputs[j].value = pasted[j];
+              pinValues[j] = pasted[j];
+              inputs[j].value = '\u2022';
             }
             if (pasted.length >= inputs.length) {
               inputs[inputs.length - 1].focus();
@@ -202,10 +221,7 @@
       }
 
       function checkPin() {
-        var entered = '';
-        for (var i = 0; i < inputs.length; i++) {
-          entered += inputs[i].value;
-        }
+        var entered = pinValues.join('');
         if (entered.length === 4) {
           if (entered === CORRECT_PIN) {
             overlay.classList.add('hidden');
@@ -214,6 +230,7 @@
             for (var i = 0; i < inputs.length; i++) {
               inputs[i].classList.add('error');
               inputs[i].value = '';
+              pinValues[i] = '';
             }
             inputs[0].focus();
             setTimeout(function() {
