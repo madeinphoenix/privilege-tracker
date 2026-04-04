@@ -410,20 +410,251 @@
 
     function getEncouragement(total, max, isToday) {
       var pct = total / max;
+
+      var todayPerfect = [
+        "10/10 no notes. Absolutely iconic.",
+        "Main character energy activated.",
+        "You understood the assignment.",
+        "Slay. That's it. That's the message.",
+        "POV: you just had a perfect day.",
+        "Not a single L taken today.",
+        "You ate and left no crumbs.",
+        "This day was bussin fr fr.",
+        "The vibes are immaculate rn.",
+        "Okay legend, save some W's for tomorrow.",
+        "Achievement unlocked: built different.",
+        "You didn't come to play, you came to WIN.",
+        "Mom and Dad are literally shook rn.",
+        "That wasn't a day, that was a masterclass.",
+        "You just speedran a perfect day.",
+        "Living rent free in the leaderboard.",
+        "The scoreboard called. It's impressed.",
+        "You woke up and chose greatness.",
+        "Certified W. No cap.",
+        "Bro really said 'flawless victory.'"
+      ];
+      var todayHigh = [
+        "Lowkey killing it today.",
+        "Not perfect but still a serve.",
+        "Big W energy happening rn.",
+        "You're locked in and it shows.",
+        "Almost maxed out \u2014 so close!",
+        "This is giving main character.",
+        "Strong day. The stats don't lie.",
+        "Okay okay, we see you out here.",
+        "Few more points and it's a wrap.",
+        "You're one good choice from perfect.",
+        "High score arc activated.",
+        "The grind is paying off today.",
+        "That's a flex-worthy score.",
+        "Plot armor is strong today.",
+        "Solid run \u2014 keep that energy.",
+        "Not done yet but the vibes are up.",
+        "You chose violence against bad habits.",
+        "This is giving responsible queen.",
+        "Almost there, don't fumble now.",
+        "Close to legendary status rn."
+      ];
+      var todayMid = [
+        "Mid but not bad \u2014 keep going!",
+        "Half the points, all the potential.",
+        "The comeback arc starts here.",
+        "You're on the board, that matters.",
+        "Not the worst, not the best. Yet.",
+        "Building momentum one point at a time.",
+        "It's giving 'work in progress.'",
+        "Some points > no points. Facts.",
+        "The bar is rising, keep pushing.",
+        "You've got points and time left.",
+        "Still in the game. Let's go.",
+        "Progress is progress. No gatekeeping.",
+        "Decent start, let's finish strong.",
+        "The second half hits different.",
+        "You're not behind, you're warming up.",
+        "50% done, 100% possible.",
+        "Room to grow and time to do it.",
+        "The vibe check says: improving.",
+        "Unlocked some things. Want more?",
+        "You're in the building. Now perform."
+      ];
+      var todayLow = [
+        "Points on the board \u2014 let's build.",
+        "Baby steps still move forward.",
+        "You showed up. That's step one.",
+        "Small W but still a W.",
+        "Not zero! The bar has been cleared.",
+        "The journey of 10 points starts with 1.",
+        "You're in it. That's what matters.",
+        "One good choice down. More to go.",
+        "Even 1 point is 1 more than 0.",
+        "The seed is planted. Water it.",
+        "It's a start and starts count.",
+        "The scoreboard sees you.",
+        "Early game vibes. Level up incoming.",
+        "Not nothing! We celebrate that.",
+        "Showing up is half the battle fr.",
+        "A little progress is still progress.",
+        "Started from the bottom, heading up.",
+        "Got a toe in the door. Push through.",
+        "The first point is the hardest one.",
+        "One point earned, confidence loading."
+      ];
+      var todayZero = [
+        "New day, new chance. You got this!",
+        "The scoreboard is ready when you are.",
+        "Fresh start energy \u2014 let's get it.",
+        "Zero points but unlimited potential.",
+        "Plot twist incoming. Believe it.",
+        "Every champion started at zero.",
+        "The page is blank. Write something epic.",
+        "No points yet but the day's not over.",
+        "Loading... great day in progress.",
+        "You haven't peaked yet. That's exciting.",
+        "The comeback starts whenever you want.",
+        "Zero is just the before photo.",
+        "Points are out there. Go get em.",
+        "Day's still young. So are you.",
+        "Haven't started? Perfect time is now.",
+        "The only way from here is up.",
+        "Clean slate. What are you gonna do?",
+        "This could be the best day yet.",
+        "Not a single point... yet.",
+        "Tomorrow you starts with today you."
+      ];
+
+      var pastPerfect = [
+        "Ate and left no crumbs that day.",
+        "That was a certified perfect day.",
+        "Full marks. Legend behavior.",
+        "POV: you crushed that entire day.",
+        "That day was literally flawless.",
+        "10/10 day. We remember.",
+        "No notes. Perfection was served.",
+        "Went full beast mode that day.",
+        "The scoreboard was shook.",
+        "That day hits different looking back.",
+        "You really said 'hold my juice.'",
+        "Peak performance was achieved.",
+        "That's one for the highlight reel.",
+        "History was made. Respectfully.",
+        "Maxed out. Nothing left on the table.",
+        "That was a W from start to finish.",
+        "Chef's kiss of a day, honestly.",
+        "You woke up and chose perfection.",
+        "That day was built different.",
+        "Actual goat behavior that day."
+      ];
+      var pastHigh = [
+        "Strong day \u2014 almost had it all.",
+        "That was a really solid run.",
+        "So close to perfect. Still a W.",
+        "Big effort that day. It showed.",
+        "Not flawless but still impressive.",
+        "You brought the energy that day.",
+        "High score vibes for sure.",
+        "That was a good day, no cap.",
+        "Nearly perfect \u2014 still legendary.",
+        "You showed up and showed out.",
+        "The stats speak for themselves.",
+        "That day was giving main character.",
+        "Respect the grind that day.",
+        "One or two away from perfect.",
+        "Great effort. The receipts are here.",
+        "That day went hard. We see it.",
+        "Almost a masterpiece. Still art.",
+        "Strong performance on record.",
+        "That was a power move day.",
+        "The vibes were clearly up."
+      ];
+      var pastMid = [
+        "A decent day \u2014 not bad at all.",
+        "You were in the mix that day.",
+        "Some wins, some room to grow.",
+        "Half the points, all the heart.",
+        "Progress was happening. We see it.",
+        "Not peak but not a flop either.",
+        "Mid-range day. Still on the board.",
+        "You put in work that day.",
+        "It was giving 'work in progress.'",
+        "Points were earned. Noted.",
+        "That was a building day.",
+        "Foundation was being laid fr.",
+        "Not your best, not your worst.",
+        "Solid effort in the books.",
+        "Some Ws collected that day.",
+        "The grind was present, if not peak.",
+        "Growth was happening quietly.",
+        "Average day, above-average effort.",
+        "You were cooking \u2014 just slowly.",
+        "A stepping stone day. Valid."
+      ];
+      var pastLow = [
+        "A few points on the board that day.",
+        "Small start, but it counted.",
+        "Not much, but not nothing either.",
+        "Some effort was made. Noted.",
+        "The bar was low but you cleared it.",
+        "A point earned is a point earned.",
+        "That day had a slow start.",
+        "You got something going at least.",
+        "Not the highlight reel, but real.",
+        "A little momentum was building.",
+        "We don't judge \u2014 we track.",
+        "Points were few but present.",
+        "The effort was there, if small.",
+        "That day was... a day.",
+        "At least the scoreboard wasn't lonely.",
+        "One or two wins. They matter.",
+        "Not a zero! That's the bar.",
+        "Baby steps were taken.",
+        "Showed a little something that day.",
+        "It was a tough one. We get it."
+      ];
+      var pastZero = [
+        "No points that day.",
+        "That was a rest day apparently.",
+        "The scoreboard took the day off.",
+        "Zero points. It happens.",
+        "Not every day is a W. That's ok.",
+        "That day chose chaos.",
+        "We don't talk about that day.",
+        "Points? On that day? Nah.",
+        "The vibes were... absent.",
+        "A day that existed. That's about it.",
+        "Nothing recorded. Moving on.",
+        "Blank day. Tomorrow was better?",
+        "The scoreboard has no memory of this.",
+        "That one's in the vault.",
+        "Not ideal but not the end.",
+        "Everyone has off days. Even legends.",
+        "Zero happens. Recovery is next.",
+        "That day was a plot device.",
+        "The before in a before/after.",
+        "Rest day? Mental health day? Sure."
+      ];
+
+      function pick(arr) {
+        // Use the date as seed so the same day always shows the same message
+        var dayNum = 0;
+        var key = isToday ? getTodayKey() : currentKey();
+        for (var i = 0; i < key.length; i++) dayNum += key.charCodeAt(i);
+        return arr[dayNum % arr.length];
+      }
+
       if (isToday) {
-        if (pct === 1) return "Perfect day! You're crushing it!";
-        if (pct >= 0.75) return "Great job today! Keep it up!";
-        if (pct >= 0.5) return "Solid progress \u2014 you're on track!";
-        if (pct >= 0.25) return "Good start! Every point counts!";
-        if (total > 0) return "You've started earning \u2014 keep going!";
-        return "New day, new chance. You've got this!";
+        if (pct === 1) return pick(todayPerfect);
+        if (pct >= 0.75) return pick(todayHigh);
+        if (pct >= 0.5) return pick(todayMid);
+        if (pct >= 0.25) return pick(todayLow);
+        if (total > 0) return pick(todayLow);
+        return pick(todayZero);
       } else {
-        if (pct === 1) return "Perfect day! You crushed it!";
-        if (pct >= 0.75) return "Great day! You killed it!";
-        if (pct >= 0.5) return "Solid day \u2014 nice work!";
-        if (pct >= 0.25) return "You got on the board!";
-        if (total > 0) return "You earned some points that day.";
-        return "No points recorded.";
+        if (pct === 1) return pick(pastPerfect);
+        if (pct >= 0.75) return pick(pastHigh);
+        if (pct >= 0.5) return pick(pastMid);
+        if (pct >= 0.25) return pick(pastLow);
+        if (total > 0) return pick(pastLow);
+        return pick(pastZero);
       }
     }
 
