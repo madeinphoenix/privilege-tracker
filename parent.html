@@ -313,27 +313,22 @@
       if (_syncPending) return;
       _syncPending = true;
       var encoded = encodeURIComponent(JSON.stringify(data));
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', CLOUD_URL + '?data=' + encoded, true);
-      xhr.onload = function() { _syncPending = false; };
-      xhr.onerror = function() { _syncPending = false; };
-      xhr.send();
+      fetch(CLOUD_URL + '?data=' + encoded, { redirect: 'follow' })
+        .then(function() { _syncPending = false; })
+        .catch(function() { _syncPending = false; });
     }
 
     function pullFromCloud(callback) {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', CLOUD_URL, true);
-      xhr.onload = function() {
-        if (xhr.status === 200) {
+      fetch(CLOUD_URL, { redirect: 'follow' })
+        .then(function(r) { return r.text(); })
+        .then(function(text) {
           try {
-            _cloudData = JSON.parse(xhr.responseText);
-            try { localStorage.setItem(STORAGE_KEY, xhr.responseText); } catch(e) { /* ok */ }
-          } catch(e) { /* bad json, ignore */ }
-        }
-        if (callback) callback();
-      };
-      xhr.onerror = function() { if (callback) callback(); };
-      xhr.send();
+            _cloudData = JSON.parse(text);
+            try { localStorage.setItem(STORAGE_KEY, text); } catch(e) { /* ok */ }
+          } catch(e) { /* bad json */ }
+          if (callback) callback();
+        })
+        .catch(function() { if (callback) callback(); });
     }
 
     function getTodayKey() {
