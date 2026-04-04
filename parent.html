@@ -309,13 +309,29 @@
       pushToCloud(data);
     }
 
+    var _pendingData = null;
+
     function pushToCloud(data) {
-      if (_syncPending) return;
+      _pendingData = data;
+      if (_syncPending) return; // will pick up _pendingData when current request finishes
+      _doCloudPush();
+    }
+
+    function _doCloudPush() {
+      if (!_pendingData) return;
       _syncPending = true;
-      var encoded = encodeURIComponent(JSON.stringify(data));
+      var dataToSend = _pendingData;
+      _pendingData = null;
+      var encoded = encodeURIComponent(JSON.stringify(dataToSend));
       fetch(CLOUD_URL + '?data=' + encoded, { redirect: 'follow' })
-        .then(function() { _syncPending = false; })
-        .catch(function() { _syncPending = false; });
+        .then(function() {
+          _syncPending = false;
+          if (_pendingData) _doCloudPush(); // newer data came in while we were pushing
+        })
+        .catch(function() {
+          _syncPending = false;
+          if (_pendingData) _doCloudPush();
+        });
     }
 
     function pullFromCloud(callback) {
