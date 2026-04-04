@@ -223,9 +223,9 @@
           <div class="bonus-fill" id="bonus-fill" style="width:0%;left:0%"></div>
         </div>
         <div class="progress-notches" id="progress-notches">
-          <span style="left:20%">200</span>
-          <span style="left:60%">600</span>
-          <span style="left:100%">1000</span>
+          <span style="left:20%">2</span>
+          <span style="left:60%">6</span>
+          <span style="left:100%">10</span>
         </div>
       </div>
     </div>
@@ -280,9 +280,9 @@
     /* ── Cloud Sync (Google Apps Script) ── */
     var CLOUD_URL = 'https://script.google.com/macros/s/AKfycbxV6VNfQkEmXdh3kXjg3R1R8intLpsnKrIpbO_5V5kyjhkeXrzsYzUmu3RxfbkSOeW4/exec';
     var STORAGE_KEY = 'adhd-privilege-tracker';
-    var MAX_DAILY = 1000;
-    var MAX_RECOVERY = 200;
-    var MAX_WEEKLY = 7000;
+    var MAX_DAILY = 10;
+    var MAX_RECOVERY = 2;
+    var MAX_WEEKLY = 70;
     var _memoryStore = null;
     var _cloudData = null;
 
@@ -358,28 +358,28 @@
       return {
         spotify: {
           name: 'Spotify', icon: '\uD83C\uDFB5', type: 'daily',
-          threshold: 200, unlocked: !paused && todayTotal >= 200,
-          paused: paused && todayTotal >= 200, current: todayTotal
+          threshold: 2, unlocked: !paused && todayTotal >= 2,
+          paused: paused && todayTotal >= 2, current: todayTotal
         },
         phone: {
           name: 'Phone', icon: '\uD83D\uDCF1', type: 'daily',
-          threshold: 600, unlocked: !paused && todayTotal >= 600,
-          paused: paused && todayTotal >= 600, current: todayTotal
+          threshold: 6, unlocked: !paused && todayTotal >= 6,
+          paused: paused && todayTotal >= 6, current: todayTotal
         },
         friendsHome: {
           name: 'Friends at Home', icon: '\uD83C\uDFE0', type: 'weekly',
-          threshold: 3000, unlocked: !paused && rolling7 >= 3000,
-          paused: paused && rolling7 >= 3000, current: rolling7
+          threshold: 30, unlocked: !paused && rolling7 >= 30,
+          paused: paused && rolling7 >= 30, current: rolling7
         },
         churchDance: {
           name: 'Church Dance', icon: '\uD83D\uDC83', type: 'weekly',
-          threshold: 3500, unlocked: !paused && rolling7 >= 3500,
-          paused: paused && rolling7 >= 3500, current: rolling7
+          threshold: 35, unlocked: !paused && rolling7 >= 35,
+          paused: paused && rolling7 >= 35, current: rolling7
         },
         friendsOut: {
           name: 'Friends Out', icon: '\uD83D\uDE97', type: 'weekly',
-          threshold: 4200, unlocked: !paused && rolling7 >= 4200,
-          paused: paused && rolling7 >= 4200, current: rolling7
+          threshold: 42, unlocked: !paused && rolling7 >= 42,
+          paused: paused && rolling7 >= 42, current: rolling7
         }
       };
     }
@@ -554,16 +554,19 @@
     /* ── Stars Helper ── */
     function renderStars(earned, max) {
       var html = '';
-      // starCount and filled are in "display" units (divided by 100)
-      var starCount = max / 100;
+      // For categories with max 4 (noDitching), show 4 stars where earning = all 4 lit
+      // For max 2 with 0-or-2 scoring, show 2 stars
+      // For max 2 with 0-1-2 scoring (chores, recovery), show 2 stars
+      var starCount = max;
+      // Map earned points to number of filled stars
       var filled;
-      if (max === 400) {
-        // 0 or 400 scoring: 0 = no stars, 400 = all 4 stars
-        filled = (earned >= 400) ? 4 : 0;
-      } else if (max === 200) {
-        filled = earned / 100; // 0, 1, or 2
+      if (max === 4) {
+        // 0 or 4 scoring: 0 = no stars, 4 = all stars
+        filled = (earned >= 4) ? 4 : 0;
+      } else if (max === 2) {
+        filled = earned; // 0, 1, or 2
       } else {
-        filled = earned / 100;
+        filled = earned;
       }
       for (var i = 0; i < starCount; i++) {
         if (i < filled) {
@@ -577,20 +580,20 @@
 
     /* ── Rank System ── */
     function getRank(total) {
-      if (total > 1000)  return { title: 'Overachiever', cls: 'rank-champion', icon: '\uD83E\uDD2F' };
-      if (total >= 1000) return { title: 'Perfect', cls: 'rank-legend', icon: '\u2B50' };
-      if (total >= 600)  return { title: 'Rising Star', cls: 'rank-star', icon: '\uD83C\uDF1F' };
-      if (total >= 200)  return { title: 'On the Board', cls: 'rank-rising', icon: '\uD83D\uDE80' };
+      if (total > 10)  return { title: 'Overachiever', cls: 'rank-champion', icon: '\uD83E\uDD2F' };
+      if (total >= 10) return { title: 'Perfect', cls: 'rank-legend', icon: '\u2B50' };
+      if (total >= 6)  return { title: 'Rising Star', cls: 'rank-star', icon: '\uD83C\uDF1F' };
+      if (total >= 2)  return { title: 'On the Board', cls: 'rank-rising', icon: '\uD83D\uDE80' };
       return { title: 'Just Getting Started', cls: 'rank-rookie', icon: '\uD83C\uDFAF' };
     }
 
     /* ── Streak Calculator ── */
     function calculateStreaks(data, endKey) {
       var categories = [
-        { field: 'chores', name: 'Chores', max: 200 },
-        { field: 'electronicsRules', name: 'Electronics', max: 200 },
-        { field: 'noSneaking', name: 'No Sneaking', max: 200 },
-        { field: 'noDitching', name: 'Stayed Put', max: 400 }
+        { field: 'chores', name: 'Chores', max: 2 },
+        { field: 'electronicsRules', name: 'Electronics', max: 2 },
+        { field: 'noSneaking', name: 'No Sneaking', max: 2 },
+        { field: 'noDitching', name: 'Stayed Put', max: 4 }
       ];
       var streaks = [];
       for (var c = 0; c < categories.length; c++) {
@@ -668,7 +671,7 @@
       document.getElementById('score-display').innerHTML = scoreHtml;
 
       // Progress bar — 10 wide normally, stretches to 12 when bonus earned
-      var BAR_MAX = recovery > 0 ? 1200 : 1000;
+      var BAR_MAX = recovery > 0 ? 12 : 10;
       var basePct = (baseTotal / BAR_MAX) * 100;
       var fill = document.getElementById('progress-fill');
       fill.style.width = basePct + '%';
@@ -687,9 +690,9 @@
       // Update notch positions to match bar scale
       var notches = document.getElementById('progress-notches');
       notches.innerHTML =
-        '<span style="left:' + (200/BAR_MAX*100) + '%">200</span>' +
-        '<span style="left:' + (600/BAR_MAX*100) + '%">600</span>' +
-        '<span style="left:' + (1000/BAR_MAX*100) + '%">1000</span>';
+        '<span style="left:' + (2/BAR_MAX*100) + '%">2</span>' +
+        '<span style="left:' + (6/BAR_MAX*100) + '%">6</span>' +
+        '<span style="left:' + (10/BAR_MAX*100) + '%">10</span>';
 
       // Rank badge
       var rank = getRank(total);
@@ -698,10 +701,10 @@
 
       // Star breakdown (base categories only)
       var categories = [
-        { name: 'Chores / Clean Room', pts: day.chores, max: 200 },
-        { name: 'Electronics Rules', pts: day.electronicsRules, max: 200 },
-        { name: 'No Sneaking / Stealing', pts: day.noSneaking, max: 200 },
-        { name: 'Stayed Where Expected', pts: day.noDitching, max: 400 }
+        { name: 'Chores / Clean Room', pts: day.chores, max: 2 },
+        { name: 'Electronics Rules', pts: day.electronicsRules, max: 2 },
+        { name: 'No Sneaking / Stealing', pts: day.noSneaking, max: 2 },
+        { name: 'Stayed Where Expected', pts: day.noDitching, max: 4 }
       ];
       var breakdownHtml = '';
       for (var i = 0; i < categories.length; i++) {
@@ -717,8 +720,8 @@
       var recSection = document.getElementById('recovery-section');
       recSection.className = 'recovery-section ' + (recovery > 0 ? 'earned' : 'dormant');
       var recStarsHtml = '';
-      for (var i = 0; i < MAX_RECOVERY / 100; i++) {
-        if (i < recovery / 100) {
+      for (var i = 0; i < MAX_RECOVERY; i++) {
+        if (i < recovery) {
           recStarsHtml += '<span class="star-filled">\u2605</span>';
         } else {
           recStarsHtml += '<span class="star-empty">\u2605</span>';
@@ -788,9 +791,9 @@
           '<div class="bar-fill" style="width:' + barPct + '%;background:' + barColor + '"></div>' +
         '</div>' +
         '<div class="bar-markers">' +
-          '<span style="left:' + (3000/MAX_WEEKLY*100) + '%">3000</span>' +
-          '<span style="left:' + (3500/MAX_WEEKLY*100) + '%">3500</span>' +
-          '<span style="left:' + (4200/MAX_WEEKLY*100) + '%">4200</span>' +
+          '<span style="left:' + (30/MAX_WEEKLY*100) + '%">30</span>' +
+          '<span style="left:' + (35/MAX_WEEKLY*100) + '%">35</span>' +
+          '<span style="left:' + (42/MAX_WEEKLY*100) + '%">42</span>' +
         '</div>';
 
       // Weekly privileges
