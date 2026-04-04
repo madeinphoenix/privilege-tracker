@@ -18,6 +18,19 @@
       border-bottom: 1px solid var(--border);
     }
     .star-row:last-child { border-bottom: none; }
+    .star-row.deal-breaker-row { background: var(--red-bg); margin: 0 -16px; padding: 10px 16px; border-radius: 6px; }
+    .deal-breaker-tag {
+      display: inline-block;
+      font-size: .55rem;
+      font-weight: 700;
+      color: var(--red);
+      background: rgba(239,68,68,.1);
+      padding: 1px 5px;
+      border-radius: 4px;
+      vertical-align: middle;
+      margin-left: 4px;
+      letter-spacing: .5px;
+    }
     .star-row .name { font-size: .9rem; flex: 1; }
     .stars {
       display: flex;
@@ -229,7 +242,7 @@
 
     <!-- Paused Alert -->
     <div class="alert alert-paused" id="paused-alert" style="display:none">
-      Privileges paused for today
+      Deal Breaker — All privileges paused
     </div>
 
     <!-- Daily Progress Bar -->
@@ -963,7 +976,7 @@
       var recovery = day.recoveryBonus || 0;
       var total = baseTotal + recovery;
       var rolling7 = calculateRolling7DayTotal(data, key);
-      var paused = day.dealBreaker || day.privilegesPaused;
+      var paused = day.dealBreaker;
       var privs = getPrivileges(total, rolling7, paused);
 
       // Date nav
@@ -1010,11 +1023,15 @@
         '<span class="rank-badge ' + rank.cls + '">' + rank.icon + ' ' + rank.title + '</span>';
 
       // Star breakdown (dynamic based on day type)
+      var dealBreakerFields = ['noDitching', 'noSneaking'];
       var breakdownHtml = '';
       for (var i = 0; i < cats.length; i++) {
         var c = cats[i];
-        breakdownHtml += '<div class="star-row">' +
-          '<span class="name">' + c.name + '</span>' +
+        var isDealBreakerRow = paused && dealBreakerFields.indexOf(c.field) >= 0;
+        breakdownHtml += '<div class="star-row' + (isDealBreakerRow ? ' deal-breaker-row' : '') + '">' +
+          '<span class="name">' + c.name +
+          (isDealBreakerRow ? ' <span class="deal-breaker-tag">DEAL BREAKER</span>' : '') +
+          '</span>' +
           '<span class="stars">' + renderStars(day[c.field] || 0, c.max) + '</span>' +
           '</div>';
       }

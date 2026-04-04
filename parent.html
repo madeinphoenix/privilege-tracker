@@ -113,28 +113,15 @@
       <div id="recovery-control"></div>
     </div>
 
-    <!-- Deal Breaker / Pause -->
+    <!-- Deal Breaker -->
     <div class="card">
-      <h2>Deal Breakers & Pauses</h2>
-
       <div class="toggle-row">
         <div>
-          <div class="label">Deal Breaker Today</div>
-          <div class="sublabel">Ditching or sneaking/stealing</div>
+          <div class="label">Deal Breaker</div>
+          <div class="sublabel">Ditching or sneaking/stealing — pauses all privileges</div>
         </div>
         <label class="toggle">
           <input type="checkbox" id="toggle-dealBreaker">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <div>
-          <div class="label">Privileges Paused</div>
-          <div class="sublabel">Override: pause all privileges today</div>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="toggle-privilegesPaused">
           <span class="slider"></span>
         </label>
       </div>
@@ -458,7 +445,6 @@
 
       // Toggles
       document.getElementById('toggle-dealBreaker').checked = day.dealBreaker;
-      document.getElementById('toggle-privilegesPaused').checked = day.privilegesPaused;
 
       // Notes
       document.getElementById('notes').value = day.notes || '';
@@ -550,9 +536,6 @@
     // Toggles
     document.getElementById('toggle-dealBreaker').addEventListener('change', function(e) {
       updateField('dealBreaker', e.target.checked);
-    });
-    document.getElementById('toggle-privilegesPaused').addEventListener('change', function(e) {
-      updateField('privilegesPaused', e.target.checked);
     });
 
     // Notes (debounced save)
