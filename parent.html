@@ -280,15 +280,14 @@
       }
     })();
 
-    /* ── Cloud Sync ── */
-    var CLOUD_URL = 'https://jsonblob.com/api/jsonBlob/019d58bc-119f-7a31-8474-07277f22fa84';
+    /* ── Cloud Sync (Google Apps Script) ── */
+    var CLOUD_URL = 'https://script.google.com/macros/s/AKfycbxV6VNfQkEmXdh3kXjg3R1R8intLpsnKrIpbO_5V5kyjhkeXrzsYzUmu3RxfbkSOeW4/exec';
     var STORAGE_KEY = 'adhd-privilege-tracker';
     var _memoryStore = null;
     var _cloudData = null;
     var _syncPending = false;
 
     function loadData() {
-      // Return cloud data if available, fall back to local
       if (_cloudData) return JSON.parse(JSON.stringify(_cloudData));
       try {
         var raw = localStorage.getItem(STORAGE_KEY);
@@ -307,19 +306,18 @@
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       } catch(e) { /* ok */ }
-      // Push to cloud
       pushToCloud(data);
     }
 
     function pushToCloud(data) {
       if (_syncPending) return;
       _syncPending = true;
+      var encoded = encodeURIComponent(JSON.stringify(data));
       var xhr = new XMLHttpRequest();
-      xhr.open('PUT', CLOUD_URL, true);
-      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.open('GET', CLOUD_URL + '?data=' + encoded, true);
       xhr.onload = function() { _syncPending = false; };
       xhr.onerror = function() { _syncPending = false; };
-      xhr.send(JSON.stringify(data));
+      xhr.send();
     }
 
     function pullFromCloud(callback) {
