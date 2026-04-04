@@ -277,14 +277,17 @@
   <a href="parent.html" class="nav-link">Parent View</a>
 
   <script>
-    /* ── Data Layer (inlined) ── */
+    /* ── Cloud Sync ── */
+    var CLOUD_URL = 'https://jsonblob.com/api/jsonBlob/019d58bc-119f-7a31-8474-07277f22fa84';
     var STORAGE_KEY = 'adhd-privilege-tracker';
     var MAX_DAILY = 10;
     var MAX_RECOVERY = 2;
     var MAX_WEEKLY = 70;
     var _memoryStore = null;
+    var _cloudData = null;
 
     function loadData() {
+      if (_cloudData) return JSON.parse(JSON.stringify(_cloudData));
       try {
         var raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
@@ -294,6 +297,22 @@
         if (_memoryStore) return JSON.parse(JSON.stringify(_memoryStore));
       }
       return { days: {} };
+    }
+
+    function pullFromCloud(callback) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', CLOUD_URL, true);
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          try {
+            _cloudData = JSON.parse(xhr.responseText);
+            try { localStorage.setItem(STORAGE_KEY, xhr.responseText); } catch(e) { /* ok */ }
+          } catch(e) { /* bad json */ }
+        }
+        if (callback) callback();
+      };
+      xhr.onerror = function() { if (callback) callback(); };
+      xhr.send();
     }
 
     function getTodayKey() {
@@ -810,11 +829,21 @@
       }
     });
 
+    // Show local data immediately, then pull cloud data
     render();
+    pullFromCloud(function() { render(); });
+
+    // Re-sync from cloud when she switches back to the app
     document.addEventListener('visibilitychange', function() {
-      if (!document.hidden) render();
+      if (!document.hidden) {
+        pullFromCloud(function() { render(); });
+      }
     });
-    setInterval(render, 30000);
+
+    // Also poll cloud every 60 seconds
+    setInterval(function() {
+      pullFromCloud(function() { render(); });
+    }, 60000);
   </script>
 </body>
 </html>

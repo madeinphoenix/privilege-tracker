@@ -280,13 +280,18 @@
       }
     })();
 
-    /* ── Data Layer (inlined) ── */
-    const STORAGE_KEY = 'adhd-privilege-tracker';
-    let _memoryStore = null;
+    /* ── Cloud Sync ── */
+    var CLOUD_URL = 'https://jsonblob.com/api/jsonBlob/019d58bc-119f-7a31-8474-07277f22fa84';
+    var STORAGE_KEY = 'adhd-privilege-tracker';
+    var _memoryStore = null;
+    var _cloudData = null;
+    var _syncPending = false;
 
     function loadData() {
+      // Return cloud data if available, fall back to local
+      if (_cloudData) return JSON.parse(JSON.stringify(_cloudData));
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        var raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           try { return JSON.parse(raw); } catch(e) { /* fall through */ }
         }
@@ -298,11 +303,39 @@
 
     function saveData(data) {
       _memoryStore = data;
+      _cloudData = data;
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      } catch(e) {
-        console.warn('localStorage unavailable, using in-memory storage');
-      }
+      } catch(e) { /* ok */ }
+      // Push to cloud
+      pushToCloud(data);
+    }
+
+    function pushToCloud(data) {
+      if (_syncPending) return;
+      _syncPending = true;
+      var xhr = new XMLHttpRequest();
+      xhr.open('PUT', CLOUD_URL, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onload = function() { _syncPending = false; };
+      xhr.onerror = function() { _syncPending = false; };
+      xhr.send(JSON.stringify(data));
+    }
+
+    function pullFromCloud(callback) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', CLOUD_URL, true);
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          try {
+            _cloudData = JSON.parse(xhr.responseText);
+            try { localStorage.setItem(STORAGE_KEY, xhr.responseText); } catch(e) { /* ok */ }
+          } catch(e) { /* bad json, ignore */ }
+        }
+        if (callback) callback();
+      };
+      xhr.onerror = function() { if (callback) callback(); };
+      xhr.send();
     }
 
     function getTodayKey() {
@@ -462,9 +495,11 @@
       }
     });
 
-    // Initial render
-    render();
-    console.log('Parent controls initialized successfully');
+    // Pull from cloud first, then render
+    render(); // show local data immediately
+    pullFromCloud(function() {
+      render(); // re-render with cloud data
+    });
   </script>
 </body>
 </html>
