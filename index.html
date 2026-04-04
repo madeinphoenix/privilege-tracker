@@ -408,14 +408,23 @@
       return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     }
 
-    function getEncouragement(total, max) {
+    function getEncouragement(total, max, isToday) {
       var pct = total / max;
-      if (pct === 1) return "Perfect day! You're crushing it!";
-      if (pct >= 0.75) return "Great job today! Keep it up!";
-      if (pct >= 0.5) return "Solid progress \u2014 you're on track!";
-      if (pct >= 0.25) return "Good start! Every point counts!";
-      if (total > 0) return "You've started earning \u2014 keep going!";
-      return "New day, new chance. You've got this!";
+      if (isToday) {
+        if (pct === 1) return "Perfect day! You're crushing it!";
+        if (pct >= 0.75) return "Great job today! Keep it up!";
+        if (pct >= 0.5) return "Solid progress \u2014 you're on track!";
+        if (pct >= 0.25) return "Good start! Every point counts!";
+        if (total > 0) return "You've started earning \u2014 keep going!";
+        return "New day, new chance. You've got this!";
+      } else {
+        if (pct === 1) return "Perfect day! You crushed it!";
+        if (pct >= 0.75) return "Great day! You killed it!";
+        if (pct >= 0.5) return "Solid day \u2014 nice work!";
+        if (pct >= 0.25) return "You got on the board!";
+        if (total > 0) return "You earned some points that day.";
+        return "No points recorded.";
+      }
     }
 
     /* ── Bunny Avatar ── */
@@ -677,7 +686,7 @@
       document.getElementById('next-day').style.opacity = isToday ? '.3' : '1';
 
       // Encouragement
-      document.getElementById('encouragement').textContent = getEncouragement(total, MAX_DAILY);
+      document.getElementById('encouragement').textContent = getEncouragement(total, MAX_DAILY, isToday);
 
       // Paused alert
       document.getElementById('paused-alert').style.display = paused ? 'block' : 'none';
