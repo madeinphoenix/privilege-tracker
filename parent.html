@@ -364,24 +364,19 @@
       return total;
     }
 
-    function calculateTotal(day) {
-      // Sum ALL possible scoring fields (for rolling 7-day which spans mixed day types)
-      return (day.chores || 0) + (day.electronicsRules || 0) +
-             (day.noSneaking || 0) + (day.noDitching || 0) +
-             (day.cleanLocker || 0) + (day.practiceMusic || 0) +
-             (day.earnMoney || 0) + (day.churchAttitude || 0) +
-             (day.sabbathActivity || 0) + (day.studyScriptures || 0) +
-             (day.recoveryBonus || 0);
+    function calculateTotalForDate(day, key) {
+      return calculateBaseForDate(day, key) + (day.recoveryBonus || 0);
     }
 
     function calculateRolling7DayTotal(data, endKey) {
-      const end = new Date(endKey + 'T12:00:00');
-      let total = 0;
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(end);
+      var end = new Date(endKey + 'T12:00:00');
+      var total = 0;
+      for (var i = 0; i < 7; i++) {
+        var d = new Date(end);
         d.setDate(d.getDate() - i);
-        const day = getDayData(data, getDateKey(d));
-        total += calculateTotal(day);
+        var k = getDateKey(d);
+        var day = getDayData(data, k);
+        total += calculateTotalForDate(day, k);
       }
       return total;
     }
