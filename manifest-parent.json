@@ -1,8 +1,8 @@
 {
-  "name": "My Progress Tracker",
-  "short_name": "Progress",
-  "description": "Daily progress and privilege tracker",
-  "start_url": "./index.html",
+  "name": "Tracker - Parent",
+  "short_name": "Parent",
+  "description": "Parent controls for privilege tracker",
+  "start_url": "./parent.html",
   "display": "standalone",
   "background_color": "#f4f6f9",
   "theme_color": "#3b82f6",
