@@ -92,10 +92,20 @@
       <button id="next-day">&#8250;</button>
     </div>
 
-    <!-- Today Total -->
-    <div class="card" style="text-align:center">
-      <div style="font-size:2rem;font-weight:700" id="day-total">0</div>
-      <div style="color:var(--muted);font-size:.9rem">Points Today (max <span id="day-max">10</span>) <span id="day-bonus" style="color:#d97706"></span></div>
+    <!-- Summary -->
+    <div class="card" id="parent-summary">
+      <div style="display:flex;justify-content:space-around;text-align:center;margin-bottom:8px">
+        <div>
+          <div style="font-size:1.6rem;font-weight:700"><span id="day-total">0</span><span style="font-size:.8rem;font-weight:400;color:var(--muted)">/<span id="day-max">10</span></span> <span id="day-bonus" style="color:#d97706;font-size:.8rem"></span></div>
+          <div style="font-size:.7rem;color:var(--muted)">Today</div>
+        </div>
+        <div style="width:1px;background:var(--border)"></div>
+        <div>
+          <div style="font-size:1.6rem;font-weight:700"><span id="rolling-total">0</span><span style="font-size:.8rem;font-weight:400;color:var(--muted)">/<span id="rolling-max">80</span></span></div>
+          <div style="font-size:.7rem;color:var(--muted)">7-Day</div>
+        </div>
+      </div>
+      <div id="parent-privileges" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center"></div>
     </div>
 
     <!-- Category Controls (generated dynamically) -->
@@ -133,11 +143,6 @@
       <textarea class="notes" id="notes" placeholder="Optional notes for this day..."></textarea>
     </div>
 
-    <!-- Rolling 7-Day -->
-    <div class="card" style="text-align:center">
-      <div style="font-size:1.8rem;font-weight:700" id="rolling-total">0</div>
-      <div style="color:var(--muted);font-size:.9rem">Rolling 7-Day Total (max 70)</div>
-    </div>
   </div>
 
   <a href="index.html" class="nav-link">Teen View</a>
@@ -414,13 +419,41 @@
       document.getElementById('next-day').disabled = isToday;
       document.getElementById('next-day').style.opacity = isToday ? '.3' : '1';
 
-      // Total
-      document.getElementById('day-total').textContent = baseTotal;
+      // Summary — totals
+      document.getElementById('day-total').textContent = total;
       document.getElementById('day-max').textContent = maxDaily;
-      document.getElementById('day-bonus').textContent = recovery > 0 ? '+' + recovery + ' bonus' : '';
-
-      // Rolling
+      document.getElementById('day-bonus').textContent = recovery > 0 ? '+' + recovery : '';
       document.getElementById('rolling-total').textContent = rolling7;
+
+      // Rolling max
+      var rollingMax = 0;
+      var wd = new Date(key + 'T12:00:00');
+      for (var wi = 0; wi < 7; wi++) {
+        rollingMax += getMaxDailyForDate(getDateKey(wd));
+        wd.setDate(wd.getDate() - 1);
+      }
+      document.getElementById('rolling-max').textContent = rollingMax;
+
+      // Privileges
+      var paused = day.dealBreaker;
+      var privList = [
+        { name: 'Spotify', need: 2, has: total, type: 'daily' },
+        { name: 'Phone 1hr', need: 6, has: total, type: 'daily' },
+        { name: 'Phone All Day', need: 10, has: total, type: 'daily' },
+        { name: 'Friends Home', need: 55, has: rolling7, type: 'weekly' },
+        { name: 'Church Dance', need: 67, has: rolling7, type: 'weekly' },
+        { name: 'Friends Out', need: 70, has: rolling7, type: 'weekly' }
+      ];
+      var privHtml = '';
+      for (var pi = 0; pi < privList.length; pi++) {
+        var pr = privList[pi];
+        var unlocked = !paused && pr.has >= pr.need;
+        var color = paused ? '#92400e' : (unlocked ? '#166534' : '#64748b');
+        var bg = paused ? '#fffbeb' : (unlocked ? '#dcfce7' : '#f1f5f9');
+        privHtml += '<span style="font-size:.65rem;font-weight:600;padding:2px 6px;border-radius:10px;color:' + color + ';background:' + bg + '">' +
+          (unlocked ? '\u2713 ' : '') + pr.name + '</span>';
+      }
+      document.getElementById('parent-privileges').innerHTML = privHtml;
 
       // Determine day type for category rebuild
       var d = new Date(key + 'T12:00:00');
