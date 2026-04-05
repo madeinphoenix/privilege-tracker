@@ -160,13 +160,9 @@
             this.value = this.value.replace(/[^0-9]/g, '');
             if (this.value.length === 1) {
               pinValues[idx] = this.value;
+              this.value = '\u2022';
               if (idx < inputs.length - 1) {
-                // Mask current digit and move to next
-                var self = this;
-                setTimeout(function() {
-                  self.value = '\u2022';
-                  inputs[idx + 1].focus();
-                }, 150);
+                inputs[idx + 1].focus();
               }
               checkPin();
             }
