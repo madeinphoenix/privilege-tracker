@@ -910,8 +910,18 @@
     }
 
     /* ── Streak Calculator ── */
+    function dayHasScores(day) {
+      // Check if any scoring field has been entered
+      var fields = ['chores','electronicsRules','noSneaking','noDitching',
+        'cleanLocker','practiceMusic','earnMoney','churchAttitude',
+        'sabbathActivity','studyScriptures','recoveryBonus'];
+      for (var i = 0; i < fields.length; i++) {
+        if (day[fields[i]]) return true;
+      }
+      return false;
+    }
+
     function calculateStreaks(data, endKey) {
-      // Track streaks for categories that exist across all day types
       var streakFields = [
         { field: 'noSneaking', name: 'No Sneaking', max: 2 },
         { field: 'noDitching', name: 'Where I Should Be', max: 4 }
@@ -924,7 +934,11 @@
         for (var i = 0; i < 30; i++) {
           var k = getDateKey(d);
           var day = getDayData(data, k);
-          // Only count if this field is relevant for that day type
+          // Skip today if no scores entered yet — don't break the streak
+          if (i === 0 && !dayHasScores(day)) {
+            d.setDate(d.getDate() - 1);
+            continue;
+          }
           var dayCats = getCategoriesForDate(k);
           var relevant = false;
           for (var j = 0; j < dayCats.length; j++) {
@@ -939,12 +953,17 @@
         }
         streaks.push({ name: cat.name, count: streak });
       }
-      // Perfect day streak — base == max for that specific day's categories
+      // Perfect day streak
       var perfectStreak = 0;
       var pd = new Date(endKey + 'T12:00:00');
       for (var i = 0; i < 30; i++) {
         var k = getDateKey(pd);
         var day = getDayData(data, k);
+        // Skip today if no scores entered yet
+        if (i === 0 && !dayHasScores(day)) {
+          pd.setDate(pd.getDate() - 1);
+          continue;
+        }
         if (calculateBaseForDate(day, k) >= getMaxDailyForDate(k)) {
           perfectStreak++;
           pd.setDate(pd.getDate() - 1);
