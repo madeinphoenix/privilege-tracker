@@ -30,43 +30,27 @@
     .lock-box .lock-icon { font-size: 2.5rem; margin-bottom: 12px; }
     .lock-box h2 { font-size: 1.2rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
     .lock-box p { font-size: .85rem; color: var(--muted); margin-bottom: 20px; }
-    .pin-area {
-      position: relative;
-      margin-bottom: 16px;
-      cursor: pointer;
-    }
-    .pin-area input {
-      position: absolute;
-      opacity: 0;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      z-index: 2;
-      font-size: 1.4rem;
-    }
-    .pin-boxes {
+    .pin-inputs {
       display: flex;
       gap: 10px;
       justify-content: center;
-      pointer-events: none;
+      margin-bottom: 16px;
     }
-    .pin-box {
+    .pin-inputs input {
       width: 48px;
       height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      text-align: center;
       font-size: 1.4rem;
       font-weight: 700;
       border: 2px solid var(--border);
       border-radius: 10px;
       background: var(--card);
       color: var(--text);
+      outline: none;
+      -webkit-appearance: none;
     }
-    .pin-box.active { border-color: var(--blue); }
-    .pin-box.filled { color: var(--text); }
-    .pin-box.error { border-color: var(--red); animation: pinShake .4s ease; }
+    .pin-inputs input:focus { border-color: var(--blue); }
+    .pin-inputs input.error { border-color: var(--red); animation: pinShake .4s ease; }
     .lock-error {
       font-size: .85rem;
       color: var(--red);
@@ -86,14 +70,11 @@
       <div class="lock-icon">&#x1F512;</div>
       <h2>Parent Access</h2>
       <p>Enter the 4-digit code to continue</p>
-      <div class="pin-area">
-        <input type="tel" id="pin-input" maxlength="4" inputmode="numeric" autocomplete="off" autofocus>
-        <div class="pin-boxes">
-          <div class="pin-box" id="pb0"></div>
-          <div class="pin-box" id="pb1"></div>
-          <div class="pin-box" id="pb2"></div>
-          <div class="pin-box" id="pb3"></div>
-        </div>
+      <div class="pin-inputs">
+        <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" autofocus>
+        <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+        <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+        <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
       </div>
       <div class="lock-error" id="lock-error"></div>
     </div>
@@ -171,45 +152,84 @@
     (function() {
       var CORRECT_PIN = '5719';
       var overlay = document.getElementById('lock-overlay');
-      var pinInput = document.getElementById('pin-input');
-      var boxes = [document.getElementById('pb0'), document.getElementById('pb1'),
-                   document.getElementById('pb2'), document.getElementById('pb3')];
+      var inputs = overlay.querySelectorAll('.pin-inputs input');
       var errorEl = document.getElementById('lock-error');
+      var pinValues = ['', '', '', ''];
 
-      // Tap anywhere in the lock area to focus the hidden input
-      overlay.addEventListener('click', function() { pinInput.focus(); });
+      // Auto-focus and open keyboard on mobile
+      setTimeout(function() { inputs[0].focus(); }, 100);
 
-      pinInput.addEventListener('input', function() {
-        var val = this.value.replace(/[^0-9]/g, '').slice(0, 4);
-        this.value = val;
+      for (var i = 0; i < inputs.length; i++) {
+        (function(idx) {
+          inputs[idx].addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length === 1) {
+              pinValues[idx] = this.value;
+              this.value = '\u2022';
+              if (idx < inputs.length - 1) {
+                inputs[idx + 1].focus();
+              }
+              checkPin();
+            }
+          });
 
-        // Update visual boxes
-        for (var i = 0; i < 4; i++) {
-          boxes[i].textContent = i < val.length ? '\u2022' : '';
-          boxes[i].classList.toggle('filled', i < val.length);
-          boxes[i].classList.toggle('active', i === val.length);
-        }
+          inputs[idx].addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace') {
+              if (this.value === '' && idx > 0) {
+                pinValues[idx - 1] = '';
+                inputs[idx - 1].value = '';
+                inputs[idx - 1].focus();
+              } else {
+                pinValues[idx] = '';
+                this.value = '';
+              }
+            }
+          });
 
-        // Check when 4 digits entered
-        if (val.length === 4) {
-          if (val === CORRECT_PIN) {
+          inputs[idx].addEventListener('focus', function() {
+            // Show actual digit briefly when focused
+            if (pinValues[idx]) {
+              this.value = pinValues[idx];
+            }
+          });
+
+          inputs[idx].addEventListener('paste', function(e) {
+            e.preventDefault();
+            var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+            for (var j = 0; j < inputs.length && j < pasted.length; j++) {
+              pinValues[j] = pasted[j];
+              inputs[j].value = '\u2022';
+            }
+            if (pasted.length >= inputs.length) {
+              inputs[inputs.length - 1].focus();
+            }
+            checkPin();
+          });
+        })(i);
+      }
+
+      function checkPin() {
+        var entered = pinValues.join('');
+        if (entered.length === 4) {
+          if (entered === CORRECT_PIN) {
             overlay.classList.add('hidden');
           } else {
             errorEl.textContent = 'Incorrect code';
-            for (var i = 0; i < 4; i++) {
-              boxes[i].classList.add('error');
-              boxes[i].textContent = '';
-              boxes[i].classList.remove('filled', 'active');
+            for (var i = 0; i < inputs.length; i++) {
+              inputs[i].classList.add('error');
+              inputs[i].value = '';
+              pinValues[i] = '';
             }
-            this.value = '';
+            inputs[0].focus();
             setTimeout(function() {
               errorEl.textContent = '';
-              for (var i = 0; i < 4; i++) boxes[i].classList.remove('error');
-              boxes[0].classList.add('active');
+              for (var i = 0; i < inputs.length; i++) {
+                inputs[i].classList.remove('error');
+              }
             }, 800);
           }
         }
-      });
+      }
     })();
 
     /* ── Cloud Sync (Google Apps Script) ── */
