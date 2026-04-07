@@ -144,6 +144,24 @@
       <textarea class="notes" id="notes" placeholder="Optional notes for this day..."></textarea>
     </div>
 
+    <!-- Analytics -->
+    <div class="card">
+      <h2>Progress</h2>
+      <div style="overflow-x:auto">
+        <table id="analytics-table" style="width:100%;border-collapse:collapse;font-size:.8rem">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:6px 4px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)">Category</th>
+              <th style="text-align:right;padding:6px 4px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)">7d</th>
+              <th style="text-align:right;padding:6px 4px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)">30d</th>
+              <th style="text-align:right;padding:6px 4px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)">60d</th>
+            </tr>
+          </thead>
+          <tbody id="analytics-body"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
   <a href="index.html" class="nav-link">Teen View</a>
@@ -456,6 +474,9 @@
       }
       document.getElementById('parent-privileges').innerHTML = privHtml;
 
+      // Analytics table
+      renderAnalytics(data);
+
       // Determine day type for category rebuild
       var d = new Date(key + 'T12:00:00');
       var dayType = d.getDay() === 6 ? 'sat' : (d.getDay() === 0 ? 'sun' : 'wk');
@@ -525,6 +546,131 @@
           });
         })(buttons[i]);
       }
+    }
+
+    /* ── Analytics Table ── */
+    var TRACKING_START = '2026-04-03'; // earlier dates show N/A
+
+    function renderAnalytics(data) {
+      var todayKey = getTodayKey();
+      var periods = [7, 30, 60];
+      // All possible categories with display names
+      var allCats = [
+        { field: 'chores', name: 'Chores' },
+        { field: 'electronicsRules', name: 'No Screen Crimes' },
+        { field: 'noSneaking', name: 'No Sneaking' },
+        { field: 'noDitching', name: 'Be Where Expected' },
+        { field: 'cleanLocker', name: 'Clean Locker' },
+        { field: 'practiceMusic', name: 'Practice Piano' },
+        { field: 'earnMoney', name: 'Earn Money' },
+        { field: 'churchAttitude', name: 'Church Attitude' },
+        { field: 'sabbathActivity', name: 'Sabbath Activity' },
+        { field: 'studyScriptures', name: 'Study Scriptures' }
+      ];
+
+      // For each category × period, compute % of applicable days where she earned the max
+      function rangeIncludesUntracked(days) {
+        var d = new Date(todayKey + 'T12:00:00');
+        d.setDate(d.getDate() - (days - 1));
+        var startKey = getDateKey(d);
+        return startKey < TRACKING_START;
+      }
+
+      function categoryRate(field, days) {
+        if (rangeIncludesUntracked(days)) return null;
+        var d = new Date(todayKey + 'T12:00:00');
+        d.setDate(d.getDate() - (days - 1));
+        var applicable = 0;
+        var earned = 0;
+        for (var i = 0; i < days; i++) {
+          var k = getDateKey(d);
+          var cats = getCategoriesForDate(k);
+          var cat = null;
+          for (var j = 0; j < cats.length; j++) {
+            if (cats[j].field === field) { cat = cats[j]; break; }
+          }
+          if (cat) {
+            applicable++;
+            var day = getDayData(data, k);
+            if ((day[field] || 0) >= cat.max) earned++;
+          }
+          d.setDate(d.getDate() + 1);
+        }
+        if (applicable === 0) return '\u2014';
+        return Math.round((earned / applicable) * 100) + '%';
+      }
+
+      function overallRate(days) {
+        if (rangeIncludesUntracked(days)) return null;
+        var d = new Date(todayKey + 'T12:00:00');
+        d.setDate(d.getDate() - (days - 1));
+        var totalEarned = 0, totalMax = 0;
+        for (var i = 0; i < days; i++) {
+          var k = getDateKey(d);
+          var day = getDayData(data, k);
+          totalEarned += calculateBaseForDate(day, k);
+          totalMax += getMaxDailyForDate(k);
+          d.setDate(d.getDate() + 1);
+        }
+        if (totalMax === 0) return '\u2014';
+        return Math.round((totalEarned / totalMax) * 100) + '%';
+      }
+
+      function perfectDays(days) {
+        if (rangeIncludesUntracked(days)) return null;
+        var d = new Date(todayKey + 'T12:00:00');
+        d.setDate(d.getDate() - (days - 1));
+        var count = 0;
+        for (var i = 0; i < days; i++) {
+          var k = getDateKey(d);
+          var day = getDayData(data, k);
+          if (calculateBaseForDate(day, k) >= getMaxDailyForDate(k)) count++;
+          d.setDate(d.getDate() + 1);
+        }
+        return count;
+      }
+
+      function fmt(val) {
+        return val === null ? '<span style="color:var(--gray)">N/A</span>' : val;
+      }
+
+      var html = '';
+      // Overall row
+      html += '<tr style="font-weight:700">' +
+        '<td style="padding:8px 4px;border-bottom:1px solid var(--border)">Overall</td>';
+      for (var p = 0; p < periods.length; p++) {
+        html += '<td style="text-align:right;padding:8px 4px;border-bottom:1px solid var(--border)">' + fmt(overallRate(periods[p])) + '</td>';
+      }
+      html += '</tr>';
+
+      // Perfect days row
+      html += '<tr>' +
+        '<td style="padding:8px 4px;border-bottom:1px solid var(--border);color:var(--muted)">Perfect days</td>';
+      for (var p = 0; p < periods.length; p++) {
+        html += '<td style="text-align:right;padding:8px 4px;border-bottom:1px solid var(--border)">' + fmt(perfectDays(periods[p])) + '</td>';
+      }
+      html += '</tr>';
+
+      // Category rows (only show ones with at least one applicable day in the longest tracked period)
+      for (var c = 0; c < allCats.length; c++) {
+        var cat = allCats[c];
+        var values = [];
+        var anyApplicable = false;
+        for (var p = 0; p < periods.length; p++) {
+          var v = categoryRate(cat.field, periods[p]);
+          values.push(v);
+          if (v !== null && v !== '\u2014') anyApplicable = true;
+        }
+        if (!anyApplicable) continue;
+        html += '<tr>' +
+          '<td style="padding:8px 4px;border-bottom:1px solid var(--border)">' + cat.name + '</td>';
+        for (var p = 0; p < periods.length; p++) {
+          html += '<td style="text-align:right;padding:8px 4px;border-bottom:1px solid var(--border)">' + fmt(values[p]) + '</td>';
+        }
+        html += '</tr>';
+      }
+
+      document.getElementById('analytics-body').innerHTML = html;
     }
 
     function highlightButtons(day) {
