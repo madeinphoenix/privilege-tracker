@@ -930,11 +930,6 @@
         for (var i = 0; i < 30; i++) {
           var k = getDateKey(d);
           var day = getDayData(data, k);
-          // Skip today if no scores entered yet — don't break the streak
-          if (i === 0 && !dayHasScores(day)) {
-            d.setDate(d.getDate() - 1);
-            continue;
-          }
           var dayCats = getCategoriesForDate(k);
           var relevant = false;
           for (var j = 0; j < dayCats.length; j++) {
@@ -942,6 +937,9 @@
           }
           if (relevant && (day[cat.field] || 0) >= cat.max) {
             streak++;
+            d.setDate(d.getDate() - 1);
+          } else if (i === 0) {
+            // Today's value not yet at max — skip without breaking the streak
             d.setDate(d.getDate() - 1);
           } else {
             break;
@@ -955,13 +953,11 @@
       for (var i = 0; i < 30; i++) {
         var k = getDateKey(pd);
         var day = getDayData(data, k);
-        // Skip today if no scores entered yet
-        if (i === 0 && !dayHasScores(day)) {
-          pd.setDate(pd.getDate() - 1);
-          continue;
-        }
         if (calculateBaseForDate(day, k) >= getMaxDailyForDate(k)) {
           perfectStreak++;
+          pd.setDate(pd.getDate() - 1);
+        } else if (i === 0) {
+          // Today not yet perfect — skip rather than break
           pd.setDate(pd.getDate() - 1);
         } else {
           break;
