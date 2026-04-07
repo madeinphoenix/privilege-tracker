@@ -1013,19 +1013,22 @@
       }
       document.getElementById('score-display').innerHTML = scoreHtml;
 
-      // Progress bar — stretches when bonus earned
-      var BAR_MAX = recovery > 0 ? (MAX_DAILY + MAX_RECOVERY) : MAX_DAILY;
-      var basePct = (baseTotal / BAR_MAX) * 100;
+      // Progress bar — always sized to day's actual max (10 weekday / 15 weekend)
+      // Recovery bonus pushes the green fill past 100% in gold (capped at bar end)
+      var BAR_MAX = MAX_DAILY;
+      var basePct = Math.min(100, (baseTotal / BAR_MAX) * 100);
       var fill = document.getElementById('progress-fill');
       fill.style.width = basePct + '%';
       fill.className = 'progress-fill' + (paused ? ' paused' : '');
 
       var bonusFill = document.getElementById('bonus-fill');
       if (recovery > 0) {
-        var bonusPct = (recovery / BAR_MAX) * 100;
+        // Gold fills from current base position up to base+recovery (clamped to 100%)
+        var bonusEndPct = Math.min(100, ((baseTotal + recovery) / BAR_MAX) * 100);
+        var bonusWidth = Math.max(0, bonusEndPct - basePct);
         bonusFill.style.left = basePct + '%';
-        bonusFill.style.width = bonusPct + '%';
-        bonusFill.style.display = 'block';
+        bonusFill.style.width = bonusWidth + '%';
+        bonusFill.style.display = bonusWidth > 0 ? 'block' : 'none';
       } else {
         bonusFill.style.display = 'none';
       }
