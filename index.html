@@ -1098,7 +1098,7 @@
       for (var i = 0; i < dailyPrivs.length; i++) {
         var p = dailyPrivs[i];
         var cls = p.paused ? 'paused' : (p.unlocked ? 'unlocked' : 'locked');
-        var status = p.paused ? 'Paused' : (p.unlocked ? '\u2713 ' + p.current + '/' + p.threshold + ' pts' : 'Need ' + p.threshold + ' pts');
+        var status = p.paused ? 'Paused' : (p.unlocked ? '\u2713 Unlocked at ' + p.threshold + ' pts' : 'Need ' + p.threshold + ' pts');
         dailyHtml += '<div class="badge ' + cls + '">' +
           '<span class="icon">' + p.icon + '</span>' +
           '<span>' + p.name + '</span>' +
@@ -1140,7 +1140,7 @@
         var p = weeklyPrivs[i];
         var cls = p.paused ? 'paused' : (p.unlocked ? 'unlocked' : 'locked');
         var needed = p.threshold - p.current;
-        var status = p.paused ? 'Paused' : (p.unlocked ? '\u2713 ' + p.current + '/' + p.threshold + ' pts' : 'Need ' + needed + ' more');
+        var status = p.paused ? 'Paused' : (p.unlocked ? '\u2713 Unlocked at ' + p.threshold + ' pts' : 'Need ' + needed + ' more');
         weeklyHtml += '<div class="badge ' + cls + '">' +
           '<span class="icon">' + p.icon + '</span>' +
           '<span>' + p.name + '</span>' +
