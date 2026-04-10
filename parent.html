@@ -547,7 +547,15 @@
             var group = btn.parentElement;
             var field = group.getAttribute('data-field');
             var value = parseInt(btn.getAttribute('data-value'));
-            updateField(field, value);
+            // If already selected, toggle back to unscored (null)
+            var data = loadData();
+            var key = currentKey();
+            var day = getDayData(data, key);
+            if (day[field] === value) {
+              updateField(field, null);
+            } else {
+              updateField(field, value);
+            }
           });
         })(buttons[i]);
       }
