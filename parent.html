@@ -376,10 +376,10 @@
 
     function getDayData(data, key) {
       return data.days[key] || {
-        chores: 0, electronicsRules: 0, noSneaking: 0,
-        noDitching: 0, recoveryBonus: 0,
-        cleanLocker: 0, practiceMusic: 0, earnMoney: 0,
-        churchAttitude: 0, sabbathActivity: 0, studyScriptures: 0,
+        chores: null, electronicsRules: null, noSneaking: null,
+        noDitching: null, recoveryBonus: null,
+        cleanLocker: null, practiceMusic: null, earnMoney: null,
+        churchAttitude: null, sabbathActivity: null, studyScriptures: null,
         dealBreaker: false, privilegesPaused: false, notes: ''
       };
     }
@@ -512,7 +512,8 @@
           '<div class="btn-group" data-field="' + c.field + '">';
         for (var v = 0; v < c.values.length; v++) {
           var val = c.values[v];
-          var selected = (day[c.field] || 0) === val ? ' selected' : '';
+          var fieldVal = day[c.field];
+          var selected = (fieldVal !== null && fieldVal === val) ? ' selected' : '';
           html += '<button type="button" data-value="' + val + '" class="' + selected + '">' + val + '</button>';
         }
         html += '</div></div>';
@@ -528,7 +529,8 @@
       for (var v = 0; v < rc.values.length; v++) {
         var val = rc.values[v];
         var label = rc.labels[v];
-        var selected = (day[rc.field] || 0) === val ? ' selected' : '';
+        var fieldVal = day[rc.field];
+        var selected = (fieldVal !== null && fieldVal === val) ? ' selected' : '';
         html += '<button type="button" data-value="' + val + '" class="' + selected + '">' + label + '</button>';
       }
       html += '</div>';
@@ -681,11 +683,11 @@
       for (var g = 0; g < groups.length; g++) {
         var group = groups[g];
         var field = group.getAttribute('data-field');
-        var value = day[field] || 0;
+        var fieldVal = day[field];
         var buttons = group.querySelectorAll('button');
         for (var i = 0; i < buttons.length; i++) {
           var btn = buttons[i];
-          if (parseInt(btn.getAttribute('data-value')) === value) {
+          if (fieldVal !== null && parseInt(btn.getAttribute('data-value')) === fieldVal) {
             btn.classList.add('selected');
           } else {
             btn.classList.remove('selected');

@@ -18,6 +18,15 @@
       border-bottom: 1px solid var(--border);
     }
     .star-row:last-child { border-bottom: none; }
+    .star-row.unscored .name { color: var(--gray); }
+    .star-row.failed .stars .star-empty { color: var(--red); opacity: .5; }
+    .star-status {
+      font-size: .65rem;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+    .star-status.pending { color: var(--gray); }
+    .star-status.missed { color: var(--red); }
     .star-row.deal-breaker-row { background: var(--red-bg); margin: 0 -16px; padding: 10px 16px; border-radius: 6px; }
     .deal-breaker-tag {
       display: inline-block;
@@ -395,10 +404,10 @@
 
     function getDayData(data, key) {
       return data.days[key] || {
-        chores: 0, electronicsRules: 0, noSneaking: 0,
-        noDitching: 0, recoveryBonus: 0,
-        cleanLocker: 0, practiceMusic: 0, earnMoney: 0,
-        churchAttitude: 0, sabbathActivity: 0, studyScriptures: 0,
+        chores: null, electronicsRules: null, noSneaking: null,
+        noDitching: null, recoveryBonus: null,
+        cleanLocker: null, practiceMusic: null, earnMoney: null,
+        churchAttitude: null, sabbathActivity: null, studyScriptures: null,
         dealBreaker: false, privilegesPaused: false, notes: ''
       };
     }
@@ -870,19 +879,21 @@
     }
 
     /* ── Stars Helper ── */
+    // earned: null = unscored, 0 = failed/missed, >0 = earned
     function renderStars(earned, max) {
       var html = '';
-      // For categories with max 4 (noDitching), show 4 stars where earning = all 4 lit
-      // For max 2 with 0-or-2 scoring, show 2 stars
-      // For max 2 with 0-1-2 scoring (chores, recovery), show 2 stars
       var starCount = max;
-      // Map earned points to number of filled stars
+      if (earned === null) {
+        // Unscored — all gray, dimmed
+        for (var i = 0; i < starCount; i++) {
+          html += '<span class="star-empty" style="opacity:.3">\u2605</span>';
+        }
+        return html;
+      }
       var filled;
       if (max === 4) {
-        // 0 or 4 scoring: 0 = no stars, 4 = all stars
         filled = (earned >= 4) ? 4 : 0;
       } else {
-        // 2-point or 3-point categories: 1 star per point
         filled = earned;
       }
       for (var i = 0; i < starCount; i++) {
@@ -1041,12 +1052,25 @@
       var breakdownHtml = '';
       for (var i = 0; i < cats.length; i++) {
         var c = cats[i];
+        var fieldVal = day[c.field];
         var isDealBreakerRow = paused && dealBreakerFields.indexOf(c.field) >= 0;
-        breakdownHtml += '<div class="star-row' + (isDealBreakerRow ? ' deal-breaker-row' : '') + '">' +
-          '<span class="name">' + c.name +
-          (isDealBreakerRow ? ' <span class="deal-breaker-tag">DEAL BREAKER</span>' : '') +
-          '</span>' +
-          '<span class="stars">' + renderStars(day[c.field] || 0, c.max) + '</span>' +
+        var rowClass = 'star-row';
+        if (isDealBreakerRow) rowClass += ' deal-breaker-row';
+        else if (fieldVal === null) rowClass += ' unscored';
+        else if (fieldVal === 0) rowClass += ' failed';
+
+        var statusTag = '';
+        if (isDealBreakerRow) {
+          statusTag = ' <span class="deal-breaker-tag">DEAL BREAKER</span>';
+        } else if (fieldVal === null) {
+          statusTag = ' <span class="star-status pending">pending</span>';
+        } else if (fieldVal === 0) {
+          statusTag = ' <span class="star-status missed">missed</span>';
+        }
+
+        breakdownHtml += '<div class="' + rowClass + '">' +
+          '<span class="name">' + c.name + statusTag + '</span>' +
+          '<span class="stars">' + renderStars(fieldVal, c.max) + '</span>' +
           '</div>';
       }
       document.getElementById('breakdown').innerHTML = breakdownHtml;
