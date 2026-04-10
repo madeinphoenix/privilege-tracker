@@ -18,7 +18,6 @@
       border-bottom: 1px solid var(--border);
     }
     .star-row:last-child { border-bottom: none; }
-    .star-row.unscored .name { color: var(--gray); }
     .star-row.failed .stars .star-empty { color: var(--red); opacity: .5; }
     .star-status {
       font-size: .65rem;
@@ -1062,8 +1061,6 @@
         var statusTag = '';
         if (isDealBreakerRow) {
           statusTag = ' <span class="deal-breaker-tag">DEAL BREAKER</span>';
-        } else if (fieldVal === null) {
-          statusTag = ' <span class="star-status pending">pending</span>';
         } else if (fieldVal === 0) {
           statusTag = ' <span class="star-status missed">missed</span>';
         }
