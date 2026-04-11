@@ -200,7 +200,7 @@ h2 { font-size: 1.1rem; font-weight: 600; color: var(--muted); margin-bottom: 8p
   min-height: 2px;
   position: relative;
 }
-.mini-week .mini-day .day-bar.today { background: var(--blue); }
+.mini-week .mini-day .day-bar.today { background: var(--green); }
 .mini-week .mini-day .day-bar.zero { background: var(--border); min-height: 2px; }
 .mini-week .mini-day .day-bar.perfect { background: linear-gradient(180deg, #fde68a 0%, #f59e0b 30%, #d4a017 60%, #b8860b 80%, #f59e0b 100%); box-shadow: 0 0 6px rgba(250,204,21,.4); }
 .mini-week .mini-day .day-bar .bar-val {
