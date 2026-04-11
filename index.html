@@ -1164,7 +1164,7 @@
         if (mIsToday) barCls += ' today';
         else if (mTotal >= mMax && mTotal > 0) barCls += ' perfect';
         else if (mTotal === 0) barCls += ' zero';
-        miniHtml += '<div class="mini-day">' +
+        miniHtml += '<div class="mini-day" data-date="' + mk + '" style="cursor:pointer">' +
           '<div class="day-bar-wrap">' +
             '<div class="' + barCls + '" style="height:' + barH + '%">' +
               '<span class="bar-val">' + mTotal + '</span>' +
@@ -1200,6 +1200,19 @@
           rolling7 + ' <small style="font-size:.85rem;font-weight:400;color:var(--muted)">/ ' + MAX_WEEKLY + ' pts</small>' +
         '</div>' +
         miniHtml;
+
+      // Wire up bar chart day clicks
+      var barDays = document.querySelectorAll('.mini-day[data-date]');
+      for (var bi = 0; bi < barDays.length; bi++) {
+        (function(el) {
+          el.addEventListener('click', function() {
+            var dateKey = el.getAttribute('data-date');
+            currentDate = new Date(dateKey + 'T12:00:00');
+            render();
+            window.scrollTo(0, 0);
+          });
+        })(barDays[bi]);
+      }
 
       // Weekly privileges
       var weeklyHtml = '';
