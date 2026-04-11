@@ -955,8 +955,8 @@
           if (relevant && (day[cat.field] || 0) >= cat.max) {
             streak++;
             d.setDate(d.getDate() - 1);
-          } else if (i === 0) {
-            // Today's value not yet at max — skip without breaking the streak
+          } else if (i === 0 && day[cat.field] === null) {
+            // Today unscored — skip without breaking
             d.setDate(d.getDate() - 1);
           } else {
             break;
@@ -973,8 +973,8 @@
         if (calculateBaseForDate(day, k) >= getMaxDailyForDate(k)) {
           perfectStreak++;
           pd.setDate(pd.getDate() - 1);
-        } else if (i === 0) {
-          // Today not yet perfect — skip rather than break
+        } else if (i === 0 && !dayHasScores(day)) {
+          // Today unscored — skip rather than break
           pd.setDate(pd.getDate() - 1);
         } else {
           break;
