@@ -23,13 +23,39 @@
     }
     .confetti-piece {
       position: absolute;
-      bottom: -20px;
       opacity: 0;
     }
-    @keyframes confettiBurst {
-      0% { opacity: 1; transform: translateY(0) translateX(0) rotate(0deg) scale(1); }
-      60% { opacity: 1; }
-      100% { opacity: 0; transform: translateY(var(--rise)) translateX(var(--drift)) rotate(var(--spin)) scale(0.3); }
+    @keyframes confettiBurstUp {
+      0% { opacity: 1; transform: translateY(0) translateX(0) rotate(0deg) scale(1.2); }
+      40% { opacity: 1; transform: translateY(var(--rise)) translateX(var(--drift)) rotate(var(--spin)) scale(1); }
+      70% { opacity: 0.8; }
+      100% { opacity: 0; transform: translateY(calc(var(--rise) + 30vh)) translateX(var(--drift2)) rotate(calc(var(--spin) * 2)) scale(0.2); }
+    }
+    @keyframes confettiSideLeft {
+      0% { opacity: 1; transform: translateX(0) translateY(0) rotate(0deg) scale(1.3); }
+      50% { opacity: 1; }
+      100% { opacity: 0; transform: translateX(var(--side)) translateY(var(--rise)) rotate(var(--spin)) scale(0.2); }
+    }
+    @keyframes confettiSideRight {
+      0% { opacity: 1; transform: translateX(0) translateY(0) rotate(0deg) scale(1.3); }
+      50% { opacity: 1; }
+      100% { opacity: 0; transform: translateX(var(--side)) translateY(var(--rise)) rotate(var(--spin)) scale(0.2); }
+    }
+    @keyframes goldFlash {
+      0% { opacity: 0; }
+      10% { opacity: 0.4; }
+      100% { opacity: 0; }
+    }
+    .confetti-flash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at 50% 100%, rgba(250,204,21,0.4) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 9998;
+      animation: goldFlash 0.8s ease-out forwards;
     }
     /* ── Stars ── */
     .star-row {
@@ -944,36 +970,97 @@
     /* ── Rank System ── */
     /* ── Confetti ── */
     function fireConfetti() {
-      var existing = document.querySelector('.confetti-container');
-      if (existing) existing.remove();
+      // Clean up any existing
+      var existing = document.querySelectorAll('.confetti-container,.confetti-flash');
+      for (var e = 0; e < existing.length; e++) existing[e].remove();
+
+      // Golden flash from bottom
+      var flash = document.createElement('div');
+      flash.className = 'confetti-flash';
+      document.body.appendChild(flash);
+
       var container = document.createElement('div');
       container.className = 'confetti-container';
-      // Gold-heavy palette with some accent colors
-      var colors = ['#facc15','#fbbf24','#f59e0b','#eab308','#fde68a','#d4a017','#FFD700','#22c55e','#3b82f6','#ec4899'];
-      var shapes = ['\u2605', '\u2726', '\u2728', '\u25CF', '\u2665'];
-      for (var i = 0; i < 70; i++) {
-        var piece = document.createElement('div');
-        piece.className = 'confetti-piece';
-        piece.textContent = shapes[Math.floor(Math.random() * shapes.length)];
-        piece.style.left = (10 + Math.random() * 80) + '%';
-        piece.style.color = colors[Math.floor(Math.random() * colors.length)];
-        piece.style.fontSize = (10 + Math.random() * 18) + 'px';
-        // Each piece rises a random height and drifts sideways
-        var rise = -(40 + Math.random() * 60) + 'vh';
-        var drift = (-30 + Math.random() * 60) + 'px';
-        var spin = (360 + Math.random() * 720) + 'deg';
-        piece.style.setProperty('--rise', rise);
-        piece.style.setProperty('--drift', drift);
-        piece.style.setProperty('--spin', spin);
-        piece.style.animationName = 'confettiBurst';
-        piece.style.animationDelay = (Math.random() * 0.3) + 's';
-        piece.style.animationDuration = (0.8 + Math.random() * 0.6) + 's';
-        piece.style.animationTimingFunction = 'cubic-bezier(0.2, 0.8, 0.4, 1)';
-        piece.style.animationFillMode = 'forwards';
-        container.appendChild(piece);
+
+      // Lots of gold with some pops of color
+      var goldColors = ['#FFD700','#facc15','#fbbf24','#f59e0b','#eab308','#fde68a','#d4a017','#FFC107','#DAA520','#B8860B'];
+      var accentColors = ['#22c55e','#3b82f6','#ec4899','#8b5cf6','#ef4444','#14b8a6'];
+      var shapes = ['\u2605','\u2605','\u2605','\u2726','\u2726','\u2728','\u2665','\u25CF','\u25C6','\uD83C\uDF1F'];
+
+      // WAVE 1: Big center burst upward (immediate)
+      for (var i = 0; i < 50; i++) {
+        var p = document.createElement('div');
+        p.className = 'confetti-piece';
+        p.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+        p.style.left = (20 + Math.random() * 60) + '%';
+        p.style.bottom = '0px';
+        p.style.color = Math.random() < 0.75 ? goldColors[Math.floor(Math.random() * goldColors.length)] : accentColors[Math.floor(Math.random() * accentColors.length)];
+        p.style.fontSize = (14 + Math.random() * 22) + 'px';
+        p.style.textShadow = '0 0 6px rgba(255,215,0,0.6)';
+        p.style.setProperty('--rise', -(50 + Math.random() * 50) + 'vh');
+        p.style.setProperty('--drift', (-60 + Math.random() * 120) + 'px');
+        p.style.setProperty('--drift2', (-80 + Math.random() * 160) + 'px');
+        p.style.setProperty('--spin', (360 + Math.random() * 1080) + 'deg');
+        p.style.animationName = 'confettiBurstUp';
+        p.style.animationDelay = (Math.random() * 0.15) + 's';
+        p.style.animationDuration = (1.0 + Math.random() * 0.5) + 's';
+        p.style.animationTimingFunction = 'cubic-bezier(0.1, 0.9, 0.3, 1)';
+        p.style.animationFillMode = 'forwards';
+        container.appendChild(p);
       }
+
+      // WAVE 2: Side bursts from left and right (slight delay)
+      for (var i = 0; i < 30; i++) {
+        var p = document.createElement('div');
+        p.className = 'confetti-piece';
+        p.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+        var fromLeft = Math.random() < 0.5;
+        p.style.left = fromLeft ? '0%' : '100%';
+        p.style.bottom = (Math.random() * 30) + '%';
+        p.style.color = Math.random() < 0.7 ? goldColors[Math.floor(Math.random() * goldColors.length)] : accentColors[Math.floor(Math.random() * accentColors.length)];
+        p.style.fontSize = (12 + Math.random() * 18) + 'px';
+        p.style.textShadow = '0 0 4px rgba(255,215,0,0.5)';
+        p.style.setProperty('--side', (fromLeft ? '' : '-') + (20 + Math.random() * 40) + 'vw');
+        p.style.setProperty('--rise', -(20 + Math.random() * 40) + 'vh');
+        p.style.setProperty('--spin', (360 + Math.random() * 720) + 'deg');
+        p.style.animationName = fromLeft ? 'confettiSideLeft' : 'confettiSideRight';
+        p.style.animationDelay = (0.1 + Math.random() * 0.2) + 's';
+        p.style.animationDuration = (0.8 + Math.random() * 0.6) + 's';
+        p.style.animationTimingFunction = 'cubic-bezier(0.1, 0.9, 0.3, 1)';
+        p.style.animationFillMode = 'forwards';
+        container.appendChild(p);
+      }
+
+      // WAVE 3: Delayed sparkle rain from top (the aftermath)
+      for (var i = 0; i < 40; i++) {
+        var p = document.createElement('div');
+        p.className = 'confetti-piece';
+        p.textContent = Math.random() < 0.6 ? '\u2728' : '\u2605';
+        p.style.left = (Math.random() * 100) + '%';
+        p.style.top = '-10px';
+        p.style.bottom = 'auto';
+        p.style.color = goldColors[Math.floor(Math.random() * goldColors.length)];
+        p.style.fontSize = (8 + Math.random() * 14) + 'px';
+        p.style.textShadow = '0 0 8px rgba(255,215,0,0.8)';
+        p.style.setProperty('--rise', (60 + Math.random() * 40) + 'vh');
+        p.style.setProperty('--drift', (-20 + Math.random() * 40) + 'px');
+        p.style.setProperty('--drift2', (-30 + Math.random() * 60) + 'px');
+        p.style.setProperty('--spin', (180 + Math.random() * 360) + 'deg');
+        p.style.animationName = 'confettiBurstUp';
+        p.style.animationDelay = (0.4 + Math.random() * 0.5) + 's';
+        p.style.animationDuration = (1.0 + Math.random() * 0.8) + 's';
+        p.style.animationTimingFunction = 'ease-out';
+        p.style.animationFillMode = 'forwards';
+        // Override rise direction to go DOWN for this wave
+        p.style.setProperty('--rise', (40 + Math.random() * 60) + 'vh');
+        container.appendChild(p);
+      }
+
       document.body.appendChild(container);
-      setTimeout(function() { container.remove(); }, 2000);
+      setTimeout(function() {
+        container.remove();
+        flash.remove();
+      }, 3000);
     }
 
     function getRank(total, maxDaily) {
