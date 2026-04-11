@@ -357,7 +357,7 @@
       { field: 'studyScriptures', name: 'Study Scriptures', values: [0, 3], max: 3, maxLabel: '0 or 3' },
       { field: 'noDitching', name: 'Be Where Expected', values: [0, 4], max: 4, maxLabel: '0 or 4' }
     ];
-    var RECOVERY_CATEGORY = { field: 'recoveryBonus', values: [0, 1, 2], max: 2, labels: ['0', '+1', '+2'] };
+    var RECOVERY_CATEGORY = { field: 'recoveryBonus', values: [1, 2], max: 2, labels: ['+1', '+2'] };
 
     function getCategoriesForDate(key) {
       var d = new Date(key + 'T12:00:00');
