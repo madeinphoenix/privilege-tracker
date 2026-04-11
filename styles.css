@@ -168,22 +168,28 @@ h2 { font-size: 1.1rem; font-weight: 600; color: var(--muted); margin-bottom: 8p
   margin-bottom: 4px;
 }
 
-/* ── 7-Day Bar Chart ── */
+/* ── Scrollable Bar Chart ── */
+.bar-chart-scroll {
+  overflow-x: auto;
+  margin-top: 10px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.bar-chart-scroll::-webkit-scrollbar { display: none; }
 .mini-week {
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
-  margin-top: 10px;
   gap: 4px;
   height: 70px;
 }
 .mini-week .mini-day {
-  flex: 1;
+  flex: 0 0 calc((100% - 24px) / 7);
   display: flex;
   flex-direction: column;
   align-items: center;
   height: 100%;
   justify-content: flex-end;
+  cursor: pointer;
 }
 .mini-week .mini-day .day-bar-wrap {
   flex: 1;
@@ -196,7 +202,6 @@ h2 { font-size: 1.1rem; font-weight: 600; color: var(--muted); margin-bottom: 8p
   width: 100%;
   border-radius: 4px 4px 0 0;
   background: var(--green);
-  transition: height .4s ease;
   min-height: 2px;
   position: relative;
 }

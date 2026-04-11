@@ -1191,31 +1191,26 @@
       }
       document.getElementById('daily-privileges').innerHTML = dailyHtml;
 
-      // 7-day bar chart
-      var miniHtml = '<div class="mini-week">';
+      // Scrollable bar chart (60 days, 7 visible at a time)
+      var CHART_DAYS = 60;
       var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      // Find max possible across the 7 days for consistent bar heights
-      var chartMax = 0;
-      for (var mi = 6; mi >= 0; mi--) {
-        var md = new Date(key + 'T12:00:00');
-        md.setDate(md.getDate() - mi);
-        var mx = getMaxDailyForDate(getDateKey(md));
-        if (mx > chartMax) chartMax = mx;
-      }
-      for (var mi = 6; mi >= 0; mi--) {
-        var md = new Date(key + 'T12:00:00');
+      var chartMax = 15; // use fixed max so bars are consistent across scrolling
+      var miniHtml = '<div class="mini-week">';
+      for (var mi = CHART_DAYS - 1; mi >= 0; mi--) {
+        var md = new Date(todayKey + 'T12:00:00');
         md.setDate(md.getDate() - mi);
         var mk = getDateKey(md);
         var mday = getDayData(data, mk);
         var mTotal = calculateTotalForDate(mday, mk);
         var mMax = getMaxDailyForDate(mk);
         var mIsToday = mk === todayKey;
+        var mIsSelected = mk === key;
         var barH = chartMax > 0 ? Math.max(2, (mTotal / chartMax) * 100) : 2;
         var barCls = 'day-bar';
-        if (mIsToday) barCls += ' today';
+        if (mIsSelected) barCls += ' today';
         else if (mTotal >= mMax && mTotal > 0) barCls += ' perfect';
         else if (mTotal === 0) barCls += ' zero';
-        miniHtml += '<div class="mini-day" data-date="' + mk + '" style="cursor:pointer">' +
+        miniHtml += '<div class="mini-day" data-date="' + mk + '">' +
           '<div class="day-bar-wrap">' +
             '<div class="' + barCls + '" style="height:' + barH + '%">' +
               '<span class="bar-val">' + mTotal + '</span>' +
@@ -1226,7 +1221,7 @@
       }
       miniHtml += '</div>';
 
-      // Weekly date range
+      // Weekly date range (based on rightmost visible = current key)
       var rangeEnd = new Date(key + 'T12:00:00');
       var rangeStart = new Date(rangeEnd);
       rangeStart.setDate(rangeStart.getDate() - 6);
@@ -1235,7 +1230,7 @@
         rangeStart.toLocaleDateString('en-US', fmtOpts) + ' \u2013 ' +
         rangeEnd.toLocaleDateString('en-US', fmtOpts);
 
-      // Weekly bar — compute actual 7-day max (varies with weekday/weekend mix)
+      // Weekly totals
       var weeklyPrivs = [privs.friendsHome, privs.churchDance, privs.friendsOut];
       var MAX_WEEKLY = 0;
       var wd = new Date(key + 'T12:00:00');
@@ -1244,26 +1239,37 @@
         MAX_WEEKLY += getMaxDailyForDate(wk);
         wd.setDate(wd.getDate() - 1);
       }
-      var barPct = Math.min(100, (rolling7 / MAX_WEEKLY) * 100);
-      var barColor = paused ? 'var(--amber)' : 'var(--green)';
+
       document.getElementById('weekly-bar').innerHTML =
         '<div style="font-size:1.4rem;font-weight:700;margin-bottom:6px">' +
           rolling7 + ' <small style="font-size:.85rem;font-weight:400;color:var(--muted)">/ ' + MAX_WEEKLY + ' pts</small>' +
         '</div>' +
-        miniHtml;
+        '<div class="bar-chart-scroll" id="bar-chart-scroll">' + miniHtml + '</div>';
 
-      // Wire up bar chart day clicks
-      var barDays = document.querySelectorAll('.mini-day[data-date]');
-      for (var bi = 0; bi < barDays.length; bi++) {
-        (function(el) {
-          el.addEventListener('click', function() {
-            var dateKey = el.getAttribute('data-date');
-            currentDate = new Date(dateKey + 'T12:00:00');
+      // Scroll to show selected day on the right
+      var scrollEl = document.getElementById('bar-chart-scroll');
+      scrollEl.scrollLeft = scrollEl.scrollWidth;
+
+      // On scroll end, navigate to the rightmost visible day
+      var scrollTimer;
+      scrollEl.addEventListener('scroll', function() {
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(function() {
+          var bars = scrollEl.querySelectorAll('.mini-day');
+          var scrollRight = scrollEl.scrollLeft + scrollEl.clientWidth;
+          var rightmostDate = null;
+          for (var bi = 0; bi < bars.length; bi++) {
+            var barRight = bars[bi].offsetLeft + bars[bi].offsetWidth;
+            if (barRight <= scrollRight + 2) {
+              rightmostDate = bars[bi].getAttribute('data-date');
+            }
+          }
+          if (rightmostDate && rightmostDate !== currentKey()) {
+            currentDate = new Date(rightmostDate + 'T12:00:00');
             render();
-            window.scrollTo(0, 0);
-          });
-        })(barDays[bi]);
-      }
+          }
+        }, 300);
+      });
 
       // Weekly privileges
       var weeklyHtml = '';
