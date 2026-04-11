@@ -1066,9 +1066,14 @@
         else if (fieldVal === 0 && c.aon) rowClass += ' failed';
 
         var statusTag = '';
+        var isPast = !isToday;
         if (isDealBreakerRow) {
           statusTag = ' <span class="deal-breaker-tag">DEAL BREAKER</span>';
         } else if (fieldVal === 0 && c.aon) {
+          statusTag = ' <span class="star-status missed">missed</span>';
+        } else if (isPast && !c.aon && fieldVal !== null && fieldVal > 0 && fieldVal < c.max) {
+          statusTag = ' <span class="star-status missed">partially missed</span>';
+        } else if (isPast && !c.aon && (fieldVal === 0 || fieldVal === null)) {
           statusTag = ' <span class="star-status missed">missed</span>';
         }
 
