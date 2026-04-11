@@ -879,7 +879,7 @@
 
     /* ── Stars Helper ── */
     // earned: null = unscored, 0 = failed/missed, >0 = earned
-    function renderStars(earned, max, allOrNothing) {
+    function renderStars(earned, max, allOrNothing, isPast) {
       var html = '';
       var starCount = max;
       if (earned === null) {
@@ -905,6 +905,8 @@
       for (var i = 0; i < starCount; i++) {
         if (i < filled) {
           html += '<span class="star-filled">\u2605</span>';
+        } else if (isPast) {
+          html += '<span style="font-size:1.1rem">\uD83D\uDE35</span>';
         } else {
           html += '<span class="star-empty">\u2605</span>';
         }
@@ -1079,7 +1081,7 @@
 
         breakdownHtml += '<div class="' + rowClass + '">' +
           '<span class="name">' + c.name + statusTag + '</span>' +
-          '<span class="stars">' + renderStars(fieldVal, c.max, c.aon) + '</span>' +
+          '<span class="stars">' + renderStars(fieldVal, c.max, c.aon, !isToday) + '</span>' +
           '</div>';
       }
       document.getElementById('breakdown').innerHTML = breakdownHtml;
