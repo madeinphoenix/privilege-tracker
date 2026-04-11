@@ -364,26 +364,26 @@
 
     /* ── Category Definitions by Day Type ── */
     var WEEKDAY_CATEGORIES = [
-      { field: 'chores', name: 'Chores / Clean Room', max: 2 },
-      { field: 'electronicsRules', name: 'Followed Phone Rules', max: 2 },
-      { field: 'noSneaking', name: 'No Sneaking / Stealing', max: 2 },
-      { field: 'noDitching', name: 'Be Where Expected', max: 4 }
+      { field: 'chores', name: 'Chores / Clean Room', max: 2, aon: false },
+      { field: 'electronicsRules', name: 'Followed Phone Rules', max: 2, aon: true },
+      { field: 'noSneaking', name: 'No Sneaking / Stealing', max: 2, aon: true },
+      { field: 'noDitching', name: 'Be Where Expected', max: 4, aon: true }
     ];
     var SATURDAY_CATEGORIES = [
-      { field: 'chores', name: 'Do Chores / Clean Room', max: 2 },
-      { field: 'cleanLocker', name: 'Clean Your Locker', max: 2 },
-      { field: 'practiceMusic', name: 'Practice Piano', max: 2 },
-      { field: 'noSneaking', name: 'No Sneaking / Stealing', max: 2 },
-      { field: 'earnMoney', name: 'Earn Money', max: 3 },
-      { field: 'noDitching', name: 'Be Where Expected', max: 4 }
+      { field: 'chores', name: 'Do Chores / Clean Room', max: 2, aon: false },
+      { field: 'cleanLocker', name: 'Clean Your Locker', max: 2, aon: true },
+      { field: 'practiceMusic', name: 'Practice Piano', max: 2, aon: true },
+      { field: 'noSneaking', name: 'No Sneaking / Stealing', max: 2, aon: true },
+      { field: 'earnMoney', name: 'Earn Money', max: 3, aon: true },
+      { field: 'noDitching', name: 'Be Where Expected', max: 4, aon: true }
     ];
     var SUNDAY_CATEGORIES = [
-      { field: 'churchAttitude', name: 'Good Attitude Before Church', max: 2 },
-      { field: 'sabbathActivity', name: 'Good Sabbath Activity', max: 2 },
-      { field: 'practiceMusic', name: 'Practice Piano', max: 2 },
-      { field: 'noSneaking', name: 'No Sneaking / Stealing', max: 2 },
-      { field: 'studyScriptures', name: 'Study Scriptures', max: 3 },
-      { field: 'noDitching', name: 'Be Where Expected', max: 4 }
+      { field: 'churchAttitude', name: 'Good Attitude Before Church', max: 2, aon: true },
+      { field: 'sabbathActivity', name: 'Good Sabbath Activity', max: 2, aon: true },
+      { field: 'practiceMusic', name: 'Practice Piano', max: 2, aon: true },
+      { field: 'noSneaking', name: 'No Sneaking / Stealing', max: 2, aon: true },
+      { field: 'studyScriptures', name: 'Study Scriptures', max: 3, aon: true },
+      { field: 'noDitching', name: 'Be Where Expected', max: 4, aon: true }
     ];
 
     function getCategoriesForDate(key) {
@@ -879,7 +879,7 @@
 
     /* ── Stars Helper ── */
     // earned: null = unscored, 0 = failed/missed, >0 = earned
-    function renderStars(earned, max) {
+    function renderStars(earned, max, allOrNothing) {
       var html = '';
       var starCount = max;
       if (earned === null) {
@@ -889,8 +889,8 @@
         }
         return html;
       }
-      if (earned === 0) {
-        // Failed — skulls
+      if (earned === 0 && allOrNothing) {
+        // Failed on all-or-nothing category — dizzy faces
         for (var i = 0; i < starCount; i++) {
           html += '<span style="font-size:1.1rem">\uD83D\uDE35</span>';
         }
@@ -1063,18 +1063,18 @@
         var rowClass = 'star-row';
         if (isDealBreakerRow) rowClass += ' deal-breaker-row';
         else if (fieldVal === null) rowClass += ' unscored';
-        else if (fieldVal === 0) rowClass += ' failed';
+        else if (fieldVal === 0 && c.aon) rowClass += ' failed';
 
         var statusTag = '';
         if (isDealBreakerRow) {
           statusTag = ' <span class="deal-breaker-tag">DEAL BREAKER</span>';
-        } else if (fieldVal === 0) {
+        } else if (fieldVal === 0 && c.aon) {
           statusTag = ' <span class="star-status missed">missed</span>';
         }
 
         breakdownHtml += '<div class="' + rowClass + '">' +
           '<span class="name">' + c.name + statusTag + '</span>' +
-          '<span class="stars">' + renderStars(fieldVal, c.max) + '</span>' +
+          '<span class="stars">' + renderStars(fieldVal, c.max, c.aon) + '</span>' +
           '</div>';
       }
       document.getElementById('breakdown').innerHTML = breakdownHtml;
