@@ -311,7 +311,12 @@
     </div>
   </div>
 
-  <div style="text-align:center;padding:24px 0 40px">
+  <div class="date-nav" id="bottom-date-nav">
+    <button id="prev-day-bottom" type="button">&#8249;</button>
+    <span class="current-date" id="current-date-bottom"></span>
+    <button id="next-day-bottom" type="button">&#8250;</button>
+  </div>
+  <div style="text-align:center;padding:12px 0 40px">
     <a href="parent.html" style="color:var(--muted);font-size:.8rem;text-decoration:none">Parent View</a>
   </div>
 
@@ -1010,10 +1015,13 @@
       var privs = getPrivileges(total, rolling7, paused);
 
       // Date nav
-      document.getElementById('current-date').textContent =
-        isToday ? 'Today' : formatDateShort(key);
+      var dateLabel = isToday ? 'Today' : formatDateShort(key);
+      document.getElementById('current-date').textContent = dateLabel;
+      document.getElementById('current-date-bottom').textContent = dateLabel;
       document.getElementById('next-day').disabled = isToday;
       document.getElementById('next-day').style.opacity = isToday ? '.3' : '1';
+      document.getElementById('next-day-bottom').disabled = isToday;
+      document.getElementById('next-day-bottom').style.opacity = isToday ? '.3' : '1';
 
       // Encouragement
       document.getElementById('encouragement').textContent = getEncouragement(total, MAX_DAILY, isToday);
@@ -1230,11 +1238,11 @@
     }
 
     // Date navigation
-    document.getElementById('prev-day').addEventListener('click', function() {
+    function goBack() {
       currentDate.setDate(currentDate.getDate() - 1);
       render();
-    });
-    document.getElementById('next-day').addEventListener('click', function() {
+    }
+    function goForward() {
       var todayKey = getTodayKey();
       var nextDate = new Date(currentDate);
       nextDate.setDate(nextDate.getDate() + 1);
@@ -1242,7 +1250,11 @@
         currentDate = nextDate;
         render();
       }
-    });
+    }
+    document.getElementById('prev-day').addEventListener('click', goBack);
+    document.getElementById('next-day').addEventListener('click', goForward);
+    document.getElementById('prev-day-bottom').addEventListener('click', goBack);
+    document.getElementById('next-day-bottom').addEventListener('click', goForward);
 
     // Show local data immediately, then pull cloud data
     render();
