@@ -108,6 +108,7 @@
         </div>
       </div>
       <div id="parent-privileges" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center"></div>
+      <div id="parent-mini-week"></div>
     </div>
 
     <!-- Category Controls (generated dynamically) -->
@@ -476,6 +477,30 @@
           (unlocked ? '\u2713 ' : '') + pr.name + '</span>';
       }
       document.getElementById('parent-privileges').innerHTML = privHtml;
+
+      // 7-day mini grid
+      var miniHtml = '<div class="mini-week">';
+      var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      var todayKeyP = getTodayKey();
+      for (var mi = 6; mi >= 0; mi--) {
+        var md = new Date(key + 'T12:00:00');
+        md.setDate(md.getDate() - mi);
+        var mk = getDateKey(md);
+        var mday = getDayData(data, mk);
+        var mTotal = calculateTotalForDate(mday, mk);
+        var mMax = getMaxDailyForDate(mk);
+        var mIsToday = mk === todayKeyP;
+        var mCls = 'day-pts';
+        if (mIsToday) mCls += ' today';
+        else if (mTotal >= mMax) mCls += ' perfect';
+        else if (mTotal === 0) mCls += ' zero';
+        miniHtml += '<div class="mini-day">' +
+          '<div class="day-label">' + dayNames[md.getDay()] + '</div>' +
+          '<div class="' + mCls + '">' + mTotal + '</div>' +
+          '</div>';
+      }
+      miniHtml += '</div>';
+      document.getElementById('parent-mini-week').innerHTML = miniHtml;
 
       // Analytics table
       renderAnalytics(data);

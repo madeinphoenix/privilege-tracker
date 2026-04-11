@@ -1138,6 +1138,28 @@
       }
       document.getElementById('daily-privileges').innerHTML = dailyHtml;
 
+      // 7-day mini grid
+      var miniHtml = '<div class="mini-week">';
+      var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      for (var mi = 6; mi >= 0; mi--) {
+        var md = new Date(key + 'T12:00:00');
+        md.setDate(md.getDate() - mi);
+        var mk = getDateKey(md);
+        var mday = getDayData(data, mk);
+        var mTotal = calculateTotalForDate(mday, mk);
+        var mMax = getMaxDailyForDate(mk);
+        var mIsToday = mk === todayKey;
+        var mCls = 'day-pts';
+        if (mIsToday) mCls += ' today';
+        else if (mTotal >= mMax) mCls += ' perfect';
+        else if (mTotal === 0) mCls += ' zero';
+        miniHtml += '<div class="mini-day">' +
+          '<div class="day-label">' + dayNames[md.getDay()] + '</div>' +
+          '<div class="' + mCls + '">' + mTotal + '</div>' +
+          '</div>';
+      }
+      miniHtml += '</div>';
+
       // Weekly date range
       var rangeEnd = new Date(key + 'T12:00:00');
       var rangeStart = new Date(rangeEnd);
@@ -1164,7 +1186,8 @@
         '</div>' +
         '<div class="bar-track">' +
           '<div class="bar-fill" style="width:' + barPct + '%;background:' + barColor + '"></div>' +
-        '</div>';
+        '</div>' +
+        miniHtml;
 
       // Weekly privileges
       var weeklyHtml = '';
