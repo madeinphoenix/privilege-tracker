@@ -889,6 +889,13 @@
         }
         return html;
       }
+      if (earned === 0) {
+        // Failed — skulls
+        for (var i = 0; i < starCount; i++) {
+          html += '<span style="font-size:1.1rem">\uD83D\uDC80</span>';
+        }
+        return html;
+      }
       var filled;
       if (max === 4) {
         filled = (earned >= 4) ? 4 : 0;
