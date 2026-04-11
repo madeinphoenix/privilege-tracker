@@ -168,41 +168,56 @@ h2 { font-size: 1.1rem; font-weight: 600; color: var(--muted); margin-bottom: 8p
   margin-bottom: 4px;
 }
 
-/* ── 7-Day Mini Grid ── */
+/* ── 7-Day Bar Chart ── */
 .mini-week {
   display: flex;
+  align-items: flex-end;
   justify-content: space-between;
   margin-top: 10px;
-  gap: 2px;
+  gap: 4px;
+  height: 70px;
 }
 .mini-week .mini-day {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+}
+.mini-week .mini-day .day-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.mini-week .mini-day .day-bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: var(--green);
+  transition: height .4s ease;
+  min-height: 2px;
+  position: relative;
+}
+.mini-week .mini-day .day-bar.today { background: var(--blue); }
+.mini-week .mini-day .day-bar.zero { background: var(--border); min-height: 2px; }
+.mini-week .mini-day .day-bar.perfect { background: var(--green); }
+.mini-week .mini-day .day-bar .bar-val {
+  position: absolute;
+  top: -14px;
+  left: 0;
+  right: 0;
   text-align: center;
+  font-size: .6rem;
+  font-weight: 700;
+  color: var(--text);
 }
 .mini-week .mini-day .day-label {
   font-size: .55rem;
   color: var(--muted);
   text-transform: uppercase;
-  margin-bottom: 2px;
-}
-.mini-week .mini-day .day-pts {
-  font-size: .75rem;
-  font-weight: 700;
-  padding: 4px 0;
-  border-radius: 6px;
-  background: var(--gray-bg);
-  color: var(--text);
-}
-.mini-week .mini-day .day-pts.today {
-  background: var(--blue-bg);
-  color: var(--blue);
-}
-.mini-week .mini-day .day-pts.perfect {
-  background: var(--green-bg);
-  color: var(--green-text);
-}
-.mini-week .mini-day .day-pts.zero {
-  color: var(--gray);
+  margin-top: 3px;
 }
 
 /* ── Parent Controls ── */

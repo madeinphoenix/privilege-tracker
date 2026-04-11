@@ -1138,9 +1138,17 @@
       }
       document.getElementById('daily-privileges').innerHTML = dailyHtml;
 
-      // 7-day mini grid
+      // 7-day bar chart
       var miniHtml = '<div class="mini-week">';
       var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      // Find max possible across the 7 days for consistent bar heights
+      var chartMax = 0;
+      for (var mi = 6; mi >= 0; mi--) {
+        var md = new Date(key + 'T12:00:00');
+        md.setDate(md.getDate() - mi);
+        var mx = getMaxDailyForDate(getDateKey(md));
+        if (mx > chartMax) chartMax = mx;
+      }
       for (var mi = 6; mi >= 0; mi--) {
         var md = new Date(key + 'T12:00:00');
         md.setDate(md.getDate() - mi);
@@ -1149,13 +1157,18 @@
         var mTotal = calculateTotalForDate(mday, mk);
         var mMax = getMaxDailyForDate(mk);
         var mIsToday = mk === todayKey;
-        var mCls = 'day-pts';
-        if (mIsToday) mCls += ' today';
-        else if (mTotal >= mMax) mCls += ' perfect';
-        else if (mTotal === 0) mCls += ' zero';
+        var barH = chartMax > 0 ? Math.max(2, (mTotal / chartMax) * 100) : 2;
+        var barCls = 'day-bar';
+        if (mIsToday) barCls += ' today';
+        else if (mTotal >= mMax && mTotal > 0) barCls += ' perfect';
+        else if (mTotal === 0) barCls += ' zero';
         miniHtml += '<div class="mini-day">' +
+          '<div class="day-bar-wrap">' +
+            '<div class="' + barCls + '" style="height:' + barH + '%">' +
+              '<span class="bar-val">' + mTotal + '</span>' +
+            '</div>' +
+          '</div>' +
           '<div class="day-label">' + dayNames[md.getDay()] + '</div>' +
-          '<div class="' + mCls + '">' + mTotal + '</div>' +
           '</div>';
       }
       miniHtml += '</div>';
