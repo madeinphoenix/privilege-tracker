@@ -204,6 +204,12 @@ h2 { font-size: 1.1rem; font-weight: 600; color: var(--muted); margin-bottom: 8p
   background: var(--blue-bg);
   color: var(--blue);
 }
+.btn-group button.selected-zero {
+  border-color: var(--red);
+  background: var(--red-bg);
+  color: var(--red);
+  color: var(--blue);
+}
 
 /* ── Toggle Switch ── */
 .toggle-row {
