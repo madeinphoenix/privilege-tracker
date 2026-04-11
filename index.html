@@ -23,14 +23,13 @@
     }
     .confetti-piece {
       position: absolute;
-      top: -20px;
+      bottom: -20px;
       opacity: 0;
-      animation: confettiFall 1.2s ease-out forwards;
     }
-    @keyframes confettiFall {
-      0% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
-      80% { opacity: 1; }
-      100% { opacity: 0; transform: translateY(100vh) rotate(720deg) scale(0.5); }
+    @keyframes confettiBurst {
+      0% { opacity: 1; transform: translateY(0) translateX(0) rotate(0deg) scale(1); }
+      60% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(var(--rise)) translateX(var(--drift)) rotate(var(--spin)) scale(0.3); }
     }
     /* ── Stars ── */
     .star-row {
@@ -949,17 +948,28 @@
       if (existing) existing.remove();
       var container = document.createElement('div');
       container.className = 'confetti-container';
-      var colors = ['#facc15','#22c55e','#3b82f6','#ef4444','#f97316','#8b5cf6','#ec4899','#14b8a6'];
-      var shapes = ['\u2605', '\u2665', '\u25CF', '\u25A0', '\u2726'];
-      for (var i = 0; i < 60; i++) {
+      // Gold-heavy palette with some accent colors
+      var colors = ['#facc15','#fbbf24','#f59e0b','#eab308','#fde68a','#d4a017','#FFD700','#22c55e','#3b82f6','#ec4899'];
+      var shapes = ['\u2605', '\u2726', '\u2728', '\u25CF', '\u2665'];
+      for (var i = 0; i < 70; i++) {
         var piece = document.createElement('div');
         piece.className = 'confetti-piece';
         piece.textContent = shapes[Math.floor(Math.random() * shapes.length)];
-        piece.style.left = (Math.random() * 100) + '%';
+        piece.style.left = (10 + Math.random() * 80) + '%';
         piece.style.color = colors[Math.floor(Math.random() * colors.length)];
-        piece.style.fontSize = (10 + Math.random() * 16) + 'px';
-        piece.style.animationDelay = (Math.random() * 0.4) + 's';
-        piece.style.animationDuration = (0.8 + Math.random() * 0.8) + 's';
+        piece.style.fontSize = (10 + Math.random() * 18) + 'px';
+        // Each piece rises a random height and drifts sideways
+        var rise = -(40 + Math.random() * 60) + 'vh';
+        var drift = (-30 + Math.random() * 60) + 'px';
+        var spin = (360 + Math.random() * 720) + 'deg';
+        piece.style.setProperty('--rise', rise);
+        piece.style.setProperty('--drift', drift);
+        piece.style.setProperty('--spin', spin);
+        piece.style.animationName = 'confettiBurst';
+        piece.style.animationDelay = (Math.random() * 0.3) + 's';
+        piece.style.animationDuration = (0.8 + Math.random() * 0.6) + 's';
+        piece.style.animationTimingFunction = 'cubic-bezier(0.2, 0.8, 0.4, 1)';
+        piece.style.animationFillMode = 'forwards';
         container.appendChild(piece);
       }
       document.body.appendChild(container);
