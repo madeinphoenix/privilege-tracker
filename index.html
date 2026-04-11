@@ -1208,7 +1208,7 @@
         var p = weeklyPrivs[i];
         var cls = p.paused ? 'paused' : (p.unlocked ? 'unlocked' : 'locked');
         var needed = p.threshold - p.current;
-        var status = p.paused ? 'Paused' : (p.unlocked ? '\u2713 Unlocked at ' + p.threshold + ' pts' : 'Need ' + needed + ' more');
+        var status = p.paused ? 'Paused' : (p.unlocked ? '\u2713 Unlocked at ' + p.threshold + ' pts' : 'Need ' + p.threshold + ' pts');
         weeklyHtml += '<div class="badge ' + cls + '">' +
           '<span class="icon">' + p.icon + '</span>' +
           '<span>' + p.name + '</span>' +
