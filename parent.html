@@ -497,10 +497,9 @@
         else if (mTotal >= mMax && mTotal > 0) barCls += ' perfect';
         else if (mTotal === 0) barCls += ' zero';
         miniHtml += '<div class="mini-day" data-date="' + mk + '" style="cursor:pointer">' +
+          '<div class="bar-val">' + mTotal + '</div>' +
           '<div class="day-bar-wrap">' +
-            '<div class="' + barCls + '" style="height:' + barH + '%">' +
-              '<span class="bar-val">' + mTotal + '</span>' +
-            '</div>' +
+            '<div class="' + barCls + '" style="height:' + barH + '%"></div>' +
           '</div>' +
           '<div class="day-label">' + dayNames[md.getDay()] + '<br>' + (md.getMonth()+1) + '/' + md.getDate() + '</div>' +
           '</div>';
