@@ -1066,8 +1066,8 @@
         var mIsToday = mk === todayKey;
         var barH = chartMax > 0 ? Math.max(2, (mTotal / chartMax) * 100) : 2;
         var barCls = 'day-bar';
-        if (mIsToday) barCls += ' today';
-        else if (mTotal >= mMax && mTotal > 0) barCls += ' perfect';
+        if (mTotal >= mMax && mTotal > 0) barCls += ' perfect';
+        else if (mIsToday) barCls += ' today';
         else if (mTotal === 0) barCls += ' zero';
         miniHtml += '<div class="mini-day" data-date="' + mk + '" style="cursor:pointer">' +
           '<div class="bar-val">' + mTotal + '</div>' +
