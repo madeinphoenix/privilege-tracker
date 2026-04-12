@@ -3,325 +3,189 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Progress</title>
+  <title>My Progress - 8-Bit Mode</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#3b82f6">
-  <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#212529">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <style>
-    body { padding-bottom: 0; }
+    * { font-family: 'Press Start 2P', cursive !important; }
+    body { background: #212529; color: #fff; padding: 8px; font-size: .65rem; line-height: 1.8; min-height: 100dvh; }
+    .container { max-width: 480px; margin: 0 auto; }
+    h1 { font-size: .85rem; color: #facc15; text-align: center; margin: 8px 0; text-shadow: 2px 2px #b8860b; }
+    h2 { font-size: .6rem; color: #92c5eb; margin-bottom: 6px; }
 
-    /* ── Stars ── */
-    .star-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-    }
+    .nes-container { margin-bottom: 10px !important; }
+    .nes-container.is-dark { background: #2a2e33; color: #fff; }
+    .nes-container.is-dark .title { font-size: .5rem; color: #facc15; background: #2a2e33; }
+
+    /* Date nav */
+    .date-nav { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+    .date-nav button { font-family: 'Press Start 2P', cursive !important; font-size: .5rem; padding: 4px 10px; }
+    .date-nav .current-date { font-size: .55rem; min-width: 110px; text-align: center; color: #fff; }
+
+    /* Encouragement */
+    .encouragement { text-align: center; padding: 8px; font-size: .5rem; color: #212529; background: #facc15; margin-bottom: 10px; image-rendering: pixelated; }
+
+    /* Alert */
+    .alert-paused { text-align: center; padding: 8px; font-size: .5rem; color: #fff; background: #c0392b; border: 4px solid #e74c3c; margin-bottom: 10px; }
+
+    /* Score */
+    .score-display { font-size: .8rem; color: #fff; margin-bottom: 4px; }
+    .score-display small { font-size: .5rem; color: #888; }
+    .score-display .bonus-pts { color: #facc15; font-size: .55rem; }
+
+    /* NES progress */
+    progress.nes-progress { height: 24px; margin-bottom: 4px; }
+
+    /* Rank */
+    .rank-badge { font-size: .45rem; padding: 2px 6px; border: 2px solid; display: inline-block; margin-top: 4px; }
+    .rank-rookie { border-color: #555; color: #888; }
+    .rank-rising { border-color: #3b82f6; color: #60a5fa; }
+    .rank-star { border-color: #facc15; color: #facc15; }
+    .rank-legend { border-color: #22c55e; color: #4ade80; }
+    .rank-champion { border-color: #facc15; color: #facc15; animation: pixelGlow 1s infinite; }
+    @keyframes pixelGlow { 0%,100% { text-shadow: 0 0 4px #facc15; } 50% { text-shadow: 0 0 16px #facc15, 0 0 24px #f59e0b; } }
+
+    /* Quest rows */
+    .star-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 2px dashed #3a3e43; font-size: .5rem; }
     .star-row:last-child { border-bottom: none; }
-    .star-row.failed .stars .star-empty { color: var(--red); opacity: .5; }
-    .star-status {
-      font-size: .65rem;
-      font-weight: 600;
-      margin-left: 6px;
-    }
-    .star-status.pending { color: var(--gray); }
-    .star-status.missed { color: var(--red); }
-    .star-row.deal-breaker-row { background: var(--red-bg); margin: 0 -16px; padding: 10px 16px; border-radius: 6px; }
-    .deal-breaker-tag {
-      display: inline-block;
-      font-size: .55rem;
-      font-weight: 700;
-      color: var(--red);
-      background: rgba(239,68,68,.1);
-      padding: 1px 5px;
-      border-radius: 4px;
-      vertical-align: middle;
-      margin-left: 4px;
-      letter-spacing: .5px;
-    }
-    .star-row .name { font-size: .9rem; flex: 1; }
-    .stars {
-      display: flex;
-      gap: 3px;
-      font-size: 1.3rem;
-      line-height: 1;
-    }
-    .stars .star-filled {
-      color: #facc15;
-      filter: drop-shadow(0 0 2px rgba(250,204,21,.5));
-      animation: casinoSparkle 2.5s ease-in-out infinite;
-      display: inline-block;
-    }
+    .star-row .name { color: #ccc; flex: 1; }
+    .stars { display: flex; gap: 2px; font-size: .7rem; }
+    .stars .star-filled { color: #facc15; animation: starBlink 2.5s ease-in-out infinite; display: inline-block; }
     .stars .star-filled:nth-child(1) { animation-delay: 0s; }
     .stars .star-filled:nth-child(2) { animation-delay: .6s; }
     .stars .star-filled:nth-child(3) { animation-delay: 1.2s; }
     .stars .star-filled:nth-child(4) { animation-delay: 1.8s; }
-    .stars .star-empty { color: #e2e8f0; }
+    .stars .star-empty { color: #3a3e43; }
+    @keyframes starBlink { 0%,100% { color: #facc15; } 15% { color: #fff; } 30% { color: #facc15; } }
 
-    /* ── Rank Badge ── */
-    .rank-badge {
-      display: inline-block;
-      margin-top: 8px;
-      padding: 4px 14px;
-      border-radius: 20px;
-      font-size: .85rem;
-      font-weight: 700;
-      letter-spacing: .3px;
-    }
-    .rank-rookie    { background: #f1f5f9; color: #64748b; }
-    .rank-rising    { background: #dbeafe; color: #2563eb; }
-    .rank-star      { background: #fef3c7; color: #d97706; }
-    .rank-legend    { background: #dcfce7; color: #16a34a; }
-    .rank-champion  { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #b45309; box-shadow: 0 0 12px rgba(250,204,21,.3); }
+    .star-row.deal-breaker-row { background: #3a2020; margin: 0 -12px; padding: 6px 12px; }
+    .deal-breaker-tag { font-size: .35rem; color: #ff6b6b; border: 1px solid #ff6b6b; padding: 1px 3px; margin-left: 3px; }
+    .star-status.missed { color: #ff6b6b; font-size: .4rem; margin-left: 3px; }
 
-    /* ── Streak ── */
-    .streak-section {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-    .streak-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-    }
+    /* Recovery */
+    .recovery-section { display: flex; align-items: center; gap: 8px; padding: 8px; border: 2px dashed #3a3e43; }
+    .recovery-section.dormant { opacity: .3; }
+    .recovery-section.earned { border-color: #facc15; opacity: 1; }
+    .recovery-icon { font-size: 1rem; }
+    .recovery-info .recovery-title { font-size: .5rem; color: #facc15; }
+    .recovery-info .recovery-desc { font-size: .35rem; color: #666; }
+    .recovery-stars { font-size: .7rem; }
+    .recovery-stars .star-filled { color: #f59e0b; }
+    .recovery-stars .star-empty { color: #3a3e43; }
+
+    /* Privileges */
+    .privilege-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .privilege-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .badge { text-align: center; padding: 8px 4px; border: 4px solid #3a3e43; font-size: .45rem; background: #2a2e33; }
+    .badge .icon { font-size: .9rem; display: block; margin-bottom: 4px; }
+    .badge .sub { font-size: .35rem; display: block; margin-top: 2px; color: #888; }
+    .badge.unlocked { border-color: #22c55e; color: #4ade80; }
+    .badge.locked { border-color: #3a3e43; color: #555; }
+    .badge.paused { border-color: #f59e0b; color: #fbbf24; }
+
+    /* Weekly bar chart */
+    .mini-week { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 8px; gap: 3px; height: 60px; }
+    .mini-week .mini-day { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; cursor: pointer; }
+    .mini-week .mini-day .bar-val { font-size: .4rem; color: #888; text-align: center; margin-bottom: 1px; }
+    .mini-week .mini-day .day-bar-wrap { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+    .mini-week .mini-day .day-bar { width: 100%; min-height: 2px; background: #22c55e; image-rendering: pixelated; }
+    .mini-week .mini-day .day-bar.today { background: #22c55e; }
+    .mini-week .mini-day .day-bar.zero { background: #333; }
+    .mini-week .mini-day .day-bar.perfect { background: #facc15; box-shadow: 0 0 6px rgba(250,204,21,.5); }
+    .mini-week .mini-day .day-label { font-size: .3rem; color: #555; text-align: center; margin-top: 2px; line-height: 1.4; }
+
+    /* Streaks */
+    .streak-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 2px dashed #3a3e43; font-size: .45rem; }
     .streak-row:last-child { border-bottom: none; }
-    .streak-row .streak-name { font-size: .9rem; }
-    .streak-row .streak-value {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-weight: 700;
-      font-size: .9rem;
-    }
-    .streak-row .streak-value.active { color: #c2410c; }
-    .streak-row .streak-value.inactive { color: var(--gray); }
-    .streak-row .flame { font-size: 1rem; }
+    .streak-row .streak-name { color: #ccc; }
+    .streak-row .streak-value.active { color: #ff6b35; }
+    .streak-row .streak-value.inactive { color: #3a3e43; }
 
-    /* ── Animations ── */
-    @keyframes casinoSparkle {
-      0%   { transform: scale(1); filter: drop-shadow(0 0 2px rgba(250,204,21,.4)) brightness(1); }
-      8%   { transform: scale(1.1); filter: drop-shadow(0 0 5px rgba(250,204,21,.7)) brightness(1.15); }
-      16%  { transform: scale(1); filter: drop-shadow(0 0 2px rgba(250,204,21,.4)) brightness(1); }
-      100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(250,204,21,.4)) brightness(1); }
-    }
-
-    @keyframes rankGlow {
-      0%, 100% { filter: brightness(1); }
-      50% { filter: brightness(1.15); }
-    }
-    .rank-champion { animation: rankGlow 2s ease-in-out infinite; }
-
-    /* ── Daily Progress Bar ── */
-    .daily-progress {
-      padding: 4px 0;
-    }
-    .daily-progress .progress-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 8px;
-    }
-    .daily-progress .progress-score {
-      font-size: 1.8rem;
-      font-weight: 700;
-    }
-    .daily-progress .progress-score small {
-      font-size: .9rem;
-      font-weight: 400;
-      color: var(--muted);
-    }
-    .daily-progress .progress-score .bonus-pts {
-      color: #d97706;
-      font-size: 1rem;
-    }
-    .daily-progress .progress-track {
-      height: 20px;
-      background: var(--border);
-      border-radius: 10px;
-      position: relative;
-      overflow: hidden;
-    }
-    .daily-progress .progress-fill {
-      height: 100%;
-      border-radius: 10px 0 0 10px;
-      background: var(--green);
-      transition: width .5s ease;
-      position: absolute;
-      left: 0;
-      top: 0;
-      z-index: 2;
-    }
-    .daily-progress .bonus-fill {
-      height: 100%;
-      border-radius: 0 10px 10px 0;
-      background: linear-gradient(90deg, #fbbf24, #f59e0b);
-      position: absolute;
-      top: 0;
-      z-index: 1;
-      transition: width .5s ease, left .5s ease;
-    }
-    .daily-progress .progress-fill.paused {
-      background: var(--amber);
-    }
-    .daily-progress .progress-scale {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 4px;
-      font-size: .6rem;
-      color: var(--muted);
-      padding: 0 1px;
-    }
-    .daily-progress .progress-scale span {
-      width: 0;
-      text-align: center;
-      flex-shrink: 0;
-    }
-    .daily-progress .progress-scale span:first-child { text-align: left; }
-    .daily-progress .progress-scale span:last-child { text-align: right; }
-
-    /* ── Recovery Bonus Section ── */
-    .recovery-section {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      border-radius: var(--radius);
-      transition: all .3s ease;
-    }
-    .recovery-section.dormant {
-      background: var(--gray-bg);
-      color: var(--gray-text);
-    }
-    .recovery-section.earned {
-      background: linear-gradient(135deg, #fffbeb, #fef3c7);
-      color: #92400e;
-      box-shadow: 0 0 0 1px rgba(251,191,36,.3);
-    }
-    .recovery-icon {
-      font-size: 1.5rem;
-      flex-shrink: 0;
-    }
-    .recovery-section.dormant .recovery-icon { opacity: .4; }
-    .recovery-info { flex: 1; }
-    .recovery-info .recovery-title {
-      font-weight: 700;
-      font-size: .9rem;
-      margin-bottom: 2px;
-    }
-    .recovery-info .recovery-desc {
-      font-size: .75rem;
-      line-height: 1.3;
-    }
-    .recovery-stars {
-      display: flex;
-      gap: 3px;
-      font-size: 1.3rem;
-      flex-shrink: 0;
-    }
-    .recovery-stars .star-filled {
-      color: #f59e0b;
-      filter: drop-shadow(0 0 3px rgba(245,158,11,.5));
-      animation: casinoSparkle 2.5s ease-in-out infinite;
-      display: inline-block;
-    }
-    .recovery-stars .star-filled:nth-child(1) { animation-delay: .3s; }
-    .recovery-stars .star-filled:nth-child(2) { animation-delay: 1.5s; }
-    .recovery-stars .star-empty { color: #d1d5db; }
+    /* Bottom links */
+    .bottom-link { text-align: center; padding: 10px 0; }
+    .bottom-link a { color: #555; font-size: .4rem; text-decoration: none; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>My Progress</h1>
-    </div>
+    <h1>&#x1F3AE; MY PROGRESS &#x1F3AE;</h1>
 
     <!-- Date Navigation -->
     <div class="date-nav">
-      <button id="prev-day" type="button">&#8249;</button>
+      <button class="nes-btn is-warning" id="prev-day" type="button">&lt;</button>
       <span class="current-date" id="current-date"></span>
-      <button id="next-day" type="button">&#8250;</button>
+      <button class="nes-btn is-warning" id="next-day" type="button">&gt;</button>
     </div>
 
     <!-- Encouragement -->
     <div class="encouragement" id="encouragement"></div>
 
     <!-- Paused Alert -->
-    <div class="alert alert-paused" id="paused-alert" style="display:none">
-      Deal Breaker — All privileges paused
+    <div class="alert-paused" id="paused-alert" style="display:none">
+      &#x26A0; DEAL BREAKER &#x2014; All privileges paused &#x26A0;
     </div>
 
-    <!-- Daily Progress Bar -->
-    <div class="card">
-      <div class="daily-progress">
-        <div class="progress-header">
-          <span class="progress-score" id="score-display"></span>
-          <span id="rank-badge"></span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
-          <div class="bonus-fill" id="bonus-fill" style="width:0%;left:0%"></div>
-        </div>
+    <!-- Daily Progress -->
+    <div class="nes-container is-dark with-title">
+      <span class="title">TODAY</span>
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span class="score-display" id="score-display"></span>
+        <span id="rank-badge"></span>
       </div>
+      <progress class="nes-progress is-success" id="progress-bar" value="0" max="100"></progress>
+      <div id="bonus-indicator" style="display:none;font-size:.4rem;color:#facc15;text-align:right"></div>
     </div>
 
-    <!-- Star Breakdown -->
-    <div class="card">
-      <h2>Today's Quests</h2>
+    <!-- Quests -->
+    <div class="nes-container is-dark with-title">
+      <span class="title">QUESTS</span>
       <div id="breakdown"></div>
     </div>
 
     <!-- Recovery Bonus -->
-    <div class="card">
-      <div class="recovery-section dormant" id="recovery-section">
-        <div class="recovery-icon">&#x1F31F;</div>
-        <div class="recovery-info">
-          <div class="recovery-title">Recovery Bonus</div>
-          <div class="recovery-desc">Told the truth, corrected quickly, or owned a mistake</div>
-        </div>
-        <div class="recovery-stars" id="recovery-stars"></div>
+    <div class="recovery-section dormant" id="recovery-section">
+      <div class="recovery-icon">&#x1F31F;</div>
+      <div class="recovery-info">
+        <div class="recovery-title">Recovery Bonus</div>
+        <div class="recovery-desc">Told the truth, corrected quickly, or owned a mistake</div>
       </div>
+      <div class="recovery-stars" id="recovery-stars"></div>
     </div>
 
-    <!-- Same-Day Privileges -->
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
-        <h2 style="margin-bottom:0">Today's Privileges</h2>
-        <span id="daily-date" style="font-size:.8rem;color:var(--muted)"></span>
+    <!-- Daily Privileges -->
+    <div class="nes-container is-dark with-title">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span class="title">REWARDS</span>
       </div>
+      <span id="daily-date" style="font-size:.4rem;color:#666;float:right;margin-top:-10px"></span>
       <div class="privilege-grid cols-3" id="daily-privileges"></div>
     </div>
 
     <!-- Weekly Privileges -->
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
-        <h2 style="margin-bottom:0">Weekly Privileges</h2>
-        <span id="weekly-range" style="font-size:.8rem;color:var(--muted)"></span>
-      </div>
+    <div class="nes-container is-dark with-title">
+      <span class="title">WEEKLY</span>
+      <span id="weekly-range" style="font-size:.35rem;color:#666;float:right;margin-top:-8px"></span>
       <div class="weekly-bar" id="weekly-bar"></div>
-      <div class="privilege-grid cols-3" id="weekly-privileges" style="margin-top:12px"></div>
+      <div class="privilege-grid cols-3" id="weekly-privileges" style="margin-top:8px"></div>
     </div>
 
-    <!-- Streaks (bottom) -->
-    <div class="card">
-      <h2>Streaks</h2>
-      <div class="streak-section" id="streaks"></div>
+    <!-- Streaks -->
+    <div class="nes-container is-dark with-title">
+      <span class="title">STREAKS</span>
+      <div id="streaks"></div>
     </div>
   </div>
 
   <div class="date-nav" id="bottom-date-nav">
-    <button id="prev-day-bottom" type="button">&#8249;</button>
+    <button class="nes-btn is-warning" id="prev-day-bottom" type="button">&lt;</button>
     <span class="current-date" id="current-date-bottom"></span>
-    <button id="next-day-bottom" type="button">&#8250;</button>
+    <button class="nes-btn is-warning" id="next-day-bottom" type="button">&gt;</button>
   </div>
-  <div style="text-align:center;padding:12px 0 40px">
-    <a href="nes.html" style="color:var(--muted);font-size:.8rem;text-decoration:none">&#x1F3AE; 8-Bit Mode</a>
-    <span style="color:var(--border);margin:0 8px">|</span>
-    <a href="parent.html" style="color:var(--muted);font-size:.8rem;text-decoration:none">Parent View</a>
+  <div class="bottom-link">
+    <a href="index.html">&#x25C0; Normal View</a> &nbsp;|&nbsp; <a href="parent.html">Parent View</a>
   </div>
 
   <script>
@@ -1076,24 +940,19 @@
       }
       document.getElementById('score-display').innerHTML = scoreHtml;
 
-      // Progress bar — always sized to day's actual max (10 weekday / 15 weekend)
-      // Recovery bonus pushes the green fill past 100% in gold (capped at bar end)
+      // NES Progress bar
       var BAR_MAX = MAX_DAILY;
       var basePct = Math.min(100, (baseTotal / BAR_MAX) * 100);
-      var fill = document.getElementById('progress-fill');
-      fill.style.width = basePct + '%';
-      fill.className = 'progress-fill' + (paused ? ' paused' : '');
-
-      var bonusFill = document.getElementById('bonus-fill');
+      var progressBar = document.getElementById('progress-bar');
+      progressBar.value = basePct;
+      progressBar.max = 100;
+      progressBar.className = 'nes-progress ' + (paused ? 'is-warning' : 'is-success');
+      var bonusInd = document.getElementById('bonus-indicator');
       if (recovery > 0) {
-        // Gold fills from current base position up to base+recovery (clamped to 100%)
-        var bonusEndPct = Math.min(100, ((baseTotal + recovery) / BAR_MAX) * 100);
-        var bonusWidth = Math.max(0, bonusEndPct - basePct);
-        bonusFill.style.left = basePct + '%';
-        bonusFill.style.width = bonusWidth + '%';
-        bonusFill.style.display = bonusWidth > 0 ? 'block' : 'none';
+        bonusInd.textContent = '+' + recovery + ' BONUS';
+        bonusInd.style.display = 'block';
       } else {
-        bonusFill.style.display = 'none';
+        bonusInd.style.display = 'none';
       }
 
       // (scale removed — too busy)
@@ -1307,5 +1166,4 @@
       pullFromCloud(function() { render(); });
     }, 60000);
   </script>
-</body>
-</html>
+</body></html>
