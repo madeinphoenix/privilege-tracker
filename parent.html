@@ -275,43 +275,53 @@
       return { days: {} };
     }
 
-    function saveData(data) {
+    // Save full data locally (always) + push only changed day to cloud (merge-safe)
+    function saveData(data, changedDateKey) {
       _memoryStore = data;
       _cloudData = data;
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       } catch(e) { /* ok */ }
-      pushToCloud(data);
+      if (changedDateKey && data.days[changedDateKey]) {
+        // Push only the changed day — server merges
+        var partial = { days: {} };
+        partial.days[changedDateKey] = data.days[changedDateKey];
+        pushToCloud(partial, changedDateKey);
+      }
     }
 
-    var _pendingData = null;
+    // Per-date pending payloads so multiple rapid changes on different days don't lose updates
+    var _pendingByDate = {};
 
-    function pushToCloud(data) {
-      _pendingData = data;
-      if (_syncPending) return; // will pick up _pendingData when current request finishes
+    function pushToCloud(partial, dateKey) {
+      _pendingByDate[dateKey] = partial.days[dateKey];
+      if (_syncPending) return;
       _doCloudPush();
     }
 
     function _doCloudPush() {
-      if (!_pendingData) return;
+      var dates = Object.keys(_pendingByDate);
+      if (dates.length === 0) return;
       _syncPending = true;
-      var dataToSend = _pendingData;
-      _pendingData = null;
-      // Use POST to avoid URL length limit (which GET ?data= hit once data accumulated)
-      // text/plain content type avoids CORS preflight
+      // Combine all pending into one merge-payload
+      var payload = { days: {} };
+      for (var i = 0; i < dates.length; i++) {
+        payload.days[dates[i]] = _pendingByDate[dates[i]];
+      }
+      _pendingByDate = {};
       fetch(CLOUD_URL, {
         method: 'POST',
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify(payload),
         redirect: 'follow',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
       })
         .then(function() {
           _syncPending = false;
-          if (_pendingData) _doCloudPush();
+          if (Object.keys(_pendingByDate).length > 0) _doCloudPush();
         })
         .catch(function() {
           _syncPending = false;
-          if (_pendingData) _doCloudPush();
+          if (Object.keys(_pendingByDate).length > 0) _doCloudPush();
         });
     }
 
@@ -763,7 +773,7 @@
         data.days[key] = getDayData(data, key);
       }
       data.days[key][field] = value;
-      saveData(data);
+      saveData(data, key);
       render();
     }
 
