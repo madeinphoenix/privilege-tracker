@@ -297,11 +297,17 @@
       _syncPending = true;
       var dataToSend = _pendingData;
       _pendingData = null;
-      var encoded = encodeURIComponent(JSON.stringify(dataToSend));
-      fetch(CLOUD_URL + '?data=' + encoded, { redirect: 'follow' })
+      // Use POST to avoid URL length limit (which GET ?data= hit once data accumulated)
+      // text/plain content type avoids CORS preflight
+      fetch(CLOUD_URL, {
+        method: 'POST',
+        body: JSON.stringify(dataToSend),
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      })
         .then(function() {
           _syncPending = false;
-          if (_pendingData) _doCloudPush(); // newer data came in while we were pushing
+          if (_pendingData) _doCloudPush();
         })
         .catch(function() {
           _syncPending = false;
