@@ -346,7 +346,9 @@
     }
 
     function pullFromCloud(callback) {
-      fetch(CLOUD_URL, { redirect: 'follow' })
+      // Cache-bust the URL so we always get fresh data
+      var url = CLOUD_URL + '?t=' + Date.now();
+      fetch(url, { redirect: 'follow', cache: 'no-store' })
         .then(function(r) { return r.text(); })
         .then(function(text) {
           try {
