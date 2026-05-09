@@ -125,7 +125,7 @@
 
     <!-- Paused Alert -->
     <div class="alert-paused" id="paused-alert" style="display:none">
-      &#x26A0; DEAL BREAKER &#x2014; All privileges paused &#x26A0;
+      <span id="paused-alert-text">&#x26A0; PRIVILEGES PAUSED &#x26A0;</span>
     </div>
 
     <!-- Daily Progress -->
@@ -294,6 +294,25 @@
 
     function calculateTotalForDate(day, key) {
       return calculateBaseForDate(day, key) + (day.recoveryBonus || 0);
+    }
+
+    /* ── Pause helpers ── */
+    function getActivePause(data) {
+      var pauses = data.pauses || [];
+      for (var i = 0; i < pauses.length; i++) {
+        if (!pauses[i].end) return pauses[i];
+      }
+      return null;
+    }
+
+    function isDatePaused(data, dateKey, dayObj) {
+      if (dayObj && dayObj.dealBreaker) return true;
+      var pauses = data.pauses || [];
+      for (var i = 0; i < pauses.length; i++) {
+        var p = pauses[i];
+        if (dateKey >= p.start && (!p.end || dateKey <= p.end)) return true;
+      }
+      return false;
     }
 
     function calculateRolling7DayTotal(data, endKey) {
@@ -916,7 +935,7 @@
       var recovery = day.recoveryBonus || 0;
       var total = baseTotal + recovery;
       var rolling7 = calculateRolling7DayTotal(data, key);
-      var paused = day.dealBreaker;
+      var paused = isDatePaused(data, key, day);
       var privs = getPrivileges(total, rolling7, paused);
 
       // Date nav
@@ -932,7 +951,19 @@
       document.getElementById('encouragement').textContent = getEncouragement(total, MAX_DAILY, isToday);
 
       // Paused alert
-      document.getElementById('paused-alert').style.display = paused ? 'block' : 'none';
+      var pausedAlert = document.getElementById('paused-alert');
+      if (paused) {
+        pausedAlert.style.display = 'block';
+        var activePause = getActivePause(data);
+        var alertText = '⚠ PRIVILEGES PAUSED';
+        if (activePause && activePause.start) {
+          var startD = new Date(activePause.start + 'T12:00:00');
+          alertText += ' — SINCE ' + startD.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+        }
+        document.getElementById('paused-alert-text').textContent = alertText;
+      } else {
+        pausedAlert.style.display = 'none';
+      }
 
       // Score display
       var scoreHtml = total + ' <small>/ ' + MAX_DAILY + ' pts</small>';
@@ -969,22 +1000,17 @@
         '<span class="rank-badge ' + rank.cls + '">' + rank.icon + ' ' + rank.title + '</span>';
 
       // Star breakdown (dynamic based on day type)
-      var dealBreakerFields = ['noDitching', 'noSneaking'];
       var breakdownHtml = '';
       for (var i = 0; i < cats.length; i++) {
         var c = cats[i];
         var fieldVal = day[c.field];
-        var isDealBreakerRow = paused && dealBreakerFields.indexOf(c.field) >= 0;
         var rowClass = 'star-row';
-        if (isDealBreakerRow) rowClass += ' deal-breaker-row';
-        else if (fieldVal === null) rowClass += ' unscored';
+        if (fieldVal === null) rowClass += ' unscored';
         else if (fieldVal === 0 && c.aon) rowClass += ' failed';
 
         var statusTag = '';
         var isPast = !isToday;
-        if (isDealBreakerRow) {
-          statusTag = ' <span class="deal-breaker-tag">DEAL BREAKER</span>';
-        } else if (fieldVal === 0 && c.aon) {
+        if (fieldVal === 0 && c.aon) {
           statusTag = ' <span class="star-status missed">missed</span>';
         } else if (isPast && !c.aon && fieldVal !== null && fieldVal > 0 && fieldVal < c.max) {
           statusTag = ' <span class="star-status missed">partially missed</span>';

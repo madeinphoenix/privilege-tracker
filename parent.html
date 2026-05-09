@@ -94,6 +94,9 @@
       <button id="next-day">&#8250;</button>
     </div>
 
+    <!-- Privileges Paused (account-wide) -->
+    <div class="card" id="pause-card" style="margin-bottom:10px"></div>
+
     <!-- Summary -->
     <div class="card" id="parent-summary">
       <div style="display:flex;justify-content:space-around;text-align:center;margin-bottom:8px">
@@ -124,20 +127,6 @@
         Told the truth, corrected quickly, and made it right (x3)
       </div>
       <div id="recovery-control"></div>
-    </div>
-
-    <!-- Deal Breaker -->
-    <div class="card">
-      <div class="toggle-row">
-        <div>
-          <div class="label">Deal Breaker</div>
-          <div class="sublabel">Ditching or sneaking/stealing — pauses all privileges</div>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="toggle-dealBreaker">
-          <span class="slider"></span>
-        </label>
-      </div>
     </div>
 
     <!-- Notes -->
@@ -292,6 +281,7 @@
 
     // Per-date pending payloads so multiple rapid changes on different days don't lose updates
     var _pendingByDate = {};
+    var _pendingPauses = null; // null = no pause change pending
 
     function pushToCloud(partial, dateKey) {
       _pendingByDate[dateKey] = partial.days[dateKey];
@@ -299,16 +289,25 @@
       _doCloudPush();
     }
 
+    function pushPausesToCloud(pauses) {
+      _pendingPauses = pauses;
+      if (_syncPending) return;
+      _doCloudPush();
+    }
+
     function _doCloudPush() {
       var dates = Object.keys(_pendingByDate);
-      if (dates.length === 0) return;
+      if (dates.length === 0 && _pendingPauses === null) return;
       _syncPending = true;
-      // Combine all pending into one merge-payload
       var payload = { days: {} };
       for (var i = 0; i < dates.length; i++) {
         payload.days[dates[i]] = _pendingByDate[dates[i]];
       }
+      if (_pendingPauses !== null) {
+        payload.pauses = _pendingPauses;
+      }
       _pendingByDate = {};
+      _pendingPauses = null;
       fetch(CLOUD_URL, {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -317,11 +316,11 @@
       })
         .then(function() {
           _syncPending = false;
-          if (Object.keys(_pendingByDate).length > 0) _doCloudPush();
+          if (Object.keys(_pendingByDate).length > 0 || _pendingPauses !== null) _doCloudPush();
         })
         .catch(function() {
           _syncPending = false;
-          if (Object.keys(_pendingByDate).length > 0) _doCloudPush();
+          if (Object.keys(_pendingByDate).length > 0 || _pendingPauses !== null) _doCloudPush();
         });
     }
 
@@ -413,6 +412,44 @@
       return calculateBaseForDate(day, key) + (day.recoveryBonus || 0);
     }
 
+    /* ── Pause helpers ── */
+    function getActivePause(data) {
+      var pauses = data.pauses || [];
+      for (var i = 0; i < pauses.length; i++) {
+        if (!pauses[i].end) return pauses[i];
+      }
+      return null;
+    }
+
+    function isDatePaused(data, dateKey, dayObj) {
+      // Honor old per-day dealBreaker flag for historical accuracy
+      if (dayObj && dayObj.dealBreaker) return true;
+      var pauses = data.pauses || [];
+      for (var i = 0; i < pauses.length; i++) {
+        var p = pauses[i];
+        if (dateKey >= p.start && (!p.end || dateKey <= p.end)) return true;
+      }
+      return false;
+    }
+
+    function startPause(data, todayKey) {
+      if (!data.pauses) data.pauses = [];
+      // Don't double-start
+      if (getActivePause(data)) return data;
+      data.pauses.push({ start: todayKey, end: null });
+      return data;
+    }
+
+    function endPause(data, todayKey) {
+      if (!data.pauses) data.pauses = [];
+      for (var i = 0; i < data.pauses.length; i++) {
+        if (!data.pauses[i].end) {
+          data.pauses[i].end = todayKey;
+        }
+      }
+      return data;
+    }
+
     function calculateRolling7DayTotal(data, endKey) {
       var end = new Date(endKey + 'T12:00:00');
       var total = 0;
@@ -475,7 +512,7 @@
       document.getElementById('rolling-max').textContent = rollingMax;
 
       // Privileges
-      var paused = day.dealBreaker;
+      var paused = isDatePaused(data, key, day);
       var privList = [
         { name: 'Spotify', need: 2, has: total, type: 'daily' },
         { name: 'Phone 1hr', need: 6, has: total, type: 'daily' },
@@ -553,11 +590,59 @@
         highlightButtons(day);
       }
 
-      // Toggles
-      document.getElementById('toggle-dealBreaker').checked = day.dealBreaker;
+      // Pause card
+      renderPauseCard(data);
 
       // Notes
       document.getElementById('notes').value = day.notes || '';
+    }
+
+    function renderPauseCard(data) {
+      var card = document.getElementById('pause-card');
+      var active = getActivePause(data);
+      if (active) {
+        var startDate = new Date(active.start + 'T12:00:00');
+        var startLabel = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        card.innerHTML =
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;background:#fef2f2;border-radius:8px;padding:10px 12px">' +
+            '<div>' +
+              '<div style="font-weight:700;color:#991b1b;font-size:.95rem">⏸  PRIVILEGES PAUSED</div>' +
+              '<div style="font-size:.75rem;color:#7c2d12">Since ' + startLabel + '</div>' +
+            '</div>' +
+            '<button id="resume-btn" type="button" style="background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:600;font-size:.85rem;cursor:pointer">Resume</button>' +
+          '</div>';
+        document.getElementById('resume-btn').addEventListener('click', onResumeClick);
+      } else {
+        card.innerHTML =
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px">' +
+            '<div style="color:var(--muted);font-size:.85rem">' +
+              '✓ Privileges active' +
+            '</div>' +
+            '<button id="pause-btn" type="button" style="background:transparent;color:var(--muted);border:1.5px solid var(--border);padding:6px 12px;border-radius:8px;font-size:.8rem;cursor:pointer">Pause All Privileges</button>' +
+          '</div>';
+        document.getElementById('pause-btn').addEventListener('click', onPauseClick);
+      }
+    }
+
+    function onPauseClick() {
+      var data = loadData();
+      startPause(data, getTodayKey());
+      _memoryStore = data;
+      _cloudData = data;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+      pushPausesToCloud(data.pauses);
+      render();
+    }
+
+    function onResumeClick() {
+      if (!confirm('Resume privileges? She will be able to use her unlocked privileges again.')) return;
+      var data = loadData();
+      endPause(data, getTodayKey());
+      _memoryStore = data;
+      _cloudData = data;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+      pushPausesToCloud(data.pauses);
+      render();
     }
 
     function buildCategoryControls(cats, day) {
@@ -779,11 +864,6 @@
     }
 
     /* Button clicks are wired up dynamically in buildCategoryControls/buildRecoveryControl */
-
-    // Toggles
-    document.getElementById('toggle-dealBreaker').addEventListener('change', function(e) {
-      updateField('dealBreaker', e.target.checked);
-    });
 
     // Notes (debounced save)
     var notesTimer;
