@@ -445,7 +445,8 @@
       var pauses = data.pauses || [];
       for (var i = 0; i < pauses.length; i++) {
         var p = pauses[i];
-        if (dateKey >= p.start && (!p.end || dateKey <= p.end)) return true;
+        // end is exclusive: the day the pause was lifted is NOT paused
+        if (dateKey >= p.start && (!p.end || dateKey < p.end)) return true;
       }
       return false;
     }
