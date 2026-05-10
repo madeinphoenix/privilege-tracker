@@ -128,25 +128,8 @@ h2 { font-size: 1.1rem; font-weight: 600; color: var(--muted); margin-bottom: 8p
 .badge .icon { font-size: 1.6rem; }
 .badge.unlocked { background: var(--green-bg); color: var(--green-text); }
 .badge.locked   { background: var(--gray-bg); color: var(--gray-text); }
-.badge.paused   { background: var(--gray-bg); color: var(--gray-text); }
+.badge.paused   { background: var(--gray-bg); color: var(--gray-text); opacity: .55; filter: grayscale(1); }
 .badge .sub { font-size: .75rem; font-weight: 400; }
-
-/* Red overlay with lock when paused */
-.badge.paused::after {
-  content: '🔒';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(252, 165, 165, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-  z-index: 2;
-  border-radius: var(--radius);
-}
 
 /* ── Weekly Progress Bar ── */
 .weekly-bar {
@@ -423,14 +406,13 @@ textarea.notes:focus { outline: none; border-color: var(--blue); }
   margin-bottom: 12px;
 }
 .alert-paused {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  color: #fff;
-  font-size: 1.1rem;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: .5px;
-  padding: 16px;
-  border: 3px solid #fca5a5;
-  text-transform: uppercase;
+  letter-spacing: .3px;
+  padding: 12px;
+  border: 1.5px solid #fca5a5;
 }
 
 /* ── Responsive ── */

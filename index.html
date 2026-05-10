@@ -1108,7 +1108,7 @@
       if (paused) {
         pausedAlert.style.display = 'block';
         var activePause = getActivePause(data);
-        var alertText = '⏸ Privileges Paused';
+        var alertText = 'Privileges Paused';
         // Only show "since [date]" if the pause started before today
         if (activePause && activePause.start && activePause.start < todayKey) {
           var startD = new Date(activePause.start + 'T12:00:00');
@@ -1132,7 +1132,7 @@
       var basePct = Math.min(100, (baseTotal / BAR_MAX) * 100);
       var fill = document.getElementById('progress-fill');
       fill.style.width = basePct + '%';
-      fill.className = 'progress-fill' + (paused ? ' paused' : '');
+      fill.className = 'progress-fill';
 
       var bonusFill = document.getElementById('bonus-fill');
       if (recovery > 0) {
