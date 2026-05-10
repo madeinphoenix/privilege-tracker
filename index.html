@@ -1103,13 +1103,13 @@
         encEl.textContent = getEncouragement(total, MAX_DAILY, isToday);
       }
 
-      // Paused alert
+      // Paused alert + body class for gray-out
       var pausedAlert = document.getElementById('paused-alert');
       if (paused) {
         pausedAlert.style.display = 'block';
+        document.body.classList.add('paused-mode');
         var activePause = getActivePause(data);
         var alertText = 'Privileges Paused';
-        // Only show "since [date]" if the pause started before today
         if (activePause && activePause.start && activePause.start < todayKey) {
           var startD = new Date(activePause.start + 'T12:00:00');
           alertText += ' — since ' + startD.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -1117,6 +1117,7 @@
         document.getElementById('paused-alert-text').textContent = alertText;
       } else {
         pausedAlert.style.display = 'none';
+        document.body.classList.remove('paused-mode');
       }
 
       // Score display
