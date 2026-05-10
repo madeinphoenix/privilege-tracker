@@ -470,32 +470,32 @@
         spotify: {
           name: 'Spotify', icon: '\uD83C\uDFB5', type: 'daily',
           threshold: 2, unlocked: !paused && todayTotal >= 2,
-          paused: paused && todayTotal >= 2, current: todayTotal
+          paused: paused, current: todayTotal
         },
         phone1hr: {
           name: 'Phone 1 hr', icon: '\uD83D\uDCF1', type: 'daily',
           threshold: 6, unlocked: !paused && todayTotal >= 6,
-          paused: paused && todayTotal >= 6, current: todayTotal
+          paused: paused, current: todayTotal
         },
         phoneAllDay: {
           name: 'Bonus Phone', icon: '\uD83D\uDCF2', type: 'daily',
           threshold: 10, unlocked: !paused && todayTotal >= 10,
-          paused: paused && todayTotal >= 10, current: todayTotal
+          paused: paused, current: todayTotal
         },
         friendsHome: {
           name: 'Friends at Home', icon: '\uD83C\uDFE0', type: 'weekly',
           threshold: 55, unlocked: !paused && rolling7 >= 55,
-          paused: paused && rolling7 >= 55, current: rolling7
+          paused: paused, current: rolling7
         },
         churchDance: {
           name: 'Church Dance', icon: '\uD83D\uDC83', type: 'weekly',
           threshold: 67, unlocked: !paused && rolling7 >= 67,
-          paused: paused && rolling7 >= 67, current: rolling7
+          paused: paused, current: rolling7
         },
         friendsOut: {
           name: 'Friends Out', icon: '\uD83D\uDE97', type: 'weekly',
           threshold: 70, unlocked: !paused && rolling7 >= 70,
-          paused: paused && rolling7 >= 70, current: rolling7
+          paused: paused, current: rolling7
         }
       };
     }
@@ -1095,8 +1095,14 @@
       document.getElementById('next-day-bottom').disabled = isToday;
       document.getElementById('next-day-bottom').style.opacity = isToday ? '.3' : '1';
 
-      // Encouragement
-      document.getElementById('encouragement').textContent = getEncouragement(total, MAX_DAILY, isToday);
+      // Encouragement (hide when paused)
+      var encEl = document.getElementById('encouragement');
+      if (paused) {
+        encEl.style.display = 'none';
+      } else {
+        encEl.style.display = '';
+        encEl.textContent = getEncouragement(total, MAX_DAILY, isToday);
+      }
 
       // Paused alert
       var pausedAlert = document.getElementById('paused-alert');

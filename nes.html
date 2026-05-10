@@ -29,7 +29,22 @@
     .encouragement { text-align: center; padding: 8px; font-size: .5rem; color: #212529; background: #facc15; margin-bottom: 10px; image-rendering: pixelated; }
 
     /* Alert */
-    .alert-paused { text-align: center; padding: 8px; font-size: .5rem; color: #fff; background: #c0392b; border: 4px solid #e74c3c; margin-bottom: 10px; }
+    .alert-paused {
+      text-align: center;
+      padding: 12px 8px;
+      font-size: .55rem;
+      color: #fff;
+      background: #c0392b;
+      border: 4px solid #fca5a5;
+      margin-bottom: 10px;
+      box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.8);
+      animation: pausedPulseNes 1.6s ease-in-out infinite;
+    }
+    @keyframes pausedPulseNes {
+      0%   { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.8); transform: scale(1); }
+      50%  { box-shadow: 0 0 0 14px rgba(220, 38, 38, 0); transform: scale(1.02); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); transform: scale(1); }
+    }
 
     /* Score */
     .score-display { font-size: .8rem; color: #fff; margin-bottom: 4px; }
@@ -79,12 +94,23 @@
     /* Privileges */
     .privilege-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .privilege-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
-    .badge { text-align: center; padding: 8px 4px; border: 4px solid #3a3e43; font-size: .45rem; background: #2a2e33; }
+    .badge { text-align: center; padding: 8px 4px; border: 4px solid #3a3e43; font-size: .45rem; background: #2a2e33; position: relative; overflow: hidden; }
     .badge .icon { font-size: .9rem; display: block; margin-bottom: 4px; }
     .badge .sub { font-size: .35rem; display: block; margin-top: 2px; color: #888; }
     .badge.unlocked { border-color: #22c55e; color: #4ade80; }
     .badge.locked { border-color: #3a3e43; color: #555; }
-    .badge.paused { border-color: #f59e0b; color: #fbbf24; }
+    .badge.paused { border-color: #dc2626; color: #fca5a5; }
+    .badge.paused::after {
+      content: '🔒';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(220, 38, 38, 0.78);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      z-index: 2;
+    }
 
     /* Weekly bar chart */
     .mini-week { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 8px; gap: 3px; height: 60px; }
@@ -333,32 +359,32 @@
         spotify: {
           name: 'Spotify', icon: '\uD83C\uDFB5', type: 'daily',
           threshold: 2, unlocked: !paused && todayTotal >= 2,
-          paused: paused && todayTotal >= 2, current: todayTotal
+          paused: paused, current: todayTotal
         },
         phone1hr: {
           name: 'Phone 1 hr', icon: '\uD83D\uDCF1', type: 'daily',
           threshold: 6, unlocked: !paused && todayTotal >= 6,
-          paused: paused && todayTotal >= 6, current: todayTotal
+          paused: paused, current: todayTotal
         },
         phoneAllDay: {
           name: 'Bonus Phone', icon: '\uD83D\uDCF2', type: 'daily',
           threshold: 10, unlocked: !paused && todayTotal >= 10,
-          paused: paused && todayTotal >= 10, current: todayTotal
+          paused: paused, current: todayTotal
         },
         friendsHome: {
           name: 'Friends at Home', icon: '\uD83C\uDFE0', type: 'weekly',
           threshold: 55, unlocked: !paused && rolling7 >= 55,
-          paused: paused && rolling7 >= 55, current: rolling7
+          paused: paused, current: rolling7
         },
         churchDance: {
           name: 'Church Dance', icon: '\uD83D\uDC83', type: 'weekly',
           threshold: 67, unlocked: !paused && rolling7 >= 67,
-          paused: paused && rolling7 >= 67, current: rolling7
+          paused: paused, current: rolling7
         },
         friendsOut: {
           name: 'Friends Out', icon: '\uD83D\uDE97', type: 'weekly',
           threshold: 70, unlocked: !paused && rolling7 >= 70,
-          paused: paused && rolling7 >= 70, current: rolling7
+          paused: paused, current: rolling7
         }
       };
     }
@@ -947,8 +973,14 @@
       document.getElementById('next-day-bottom').disabled = isToday;
       document.getElementById('next-day-bottom').style.opacity = isToday ? '.3' : '1';
 
-      // Encouragement
-      document.getElementById('encouragement').textContent = getEncouragement(total, MAX_DAILY, isToday);
+      // Encouragement (hide when paused)
+      var encEl = document.getElementById('encouragement');
+      if (paused) {
+        encEl.style.display = 'none';
+      } else {
+        encEl.style.display = '';
+        encEl.textContent = getEncouragement(total, MAX_DAILY, isToday);
+      }
 
       // Paused alert
       var pausedAlert = document.getElementById('paused-alert');
