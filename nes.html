@@ -956,7 +956,7 @@
         pausedAlert.style.display = 'block';
         var activePause = getActivePause(data);
         var alertText = '⚠ PRIVILEGES PAUSED';
-        if (activePause && activePause.start) {
+        if (activePause && activePause.start && activePause.start < todayKey) {
           var startD = new Date(activePause.start + 'T12:00:00');
           alertText += ' — SINCE ' + startD.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
         }

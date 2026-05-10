@@ -1104,7 +1104,8 @@
         pausedAlert.style.display = 'block';
         var activePause = getActivePause(data);
         var alertText = '⏸ Privileges Paused';
-        if (activePause && activePause.start) {
+        // Only show "since [date]" if the pause started before today
+        if (activePause && activePause.start && activePause.start < todayKey) {
           var startD = new Date(activePause.start + 'T12:00:00');
           alertText += ' — since ' + startD.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
