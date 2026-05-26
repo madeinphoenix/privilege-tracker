@@ -1081,7 +1081,12 @@
       var baseTotal = calculateBaseForDate(day, key);
       var recovery = day.recoveryBonus || 0;
       var total = baseTotal + recovery;
-      var rolling7 = calculateRolling7DayTotal(data, key);
+      // Weekly privileges look back from YESTERDAY (the day being viewed is excluded),
+      // so unlocks are based on the previous day's ending total.
+      var prevDate = new Date(key + 'T12:00:00');
+      prevDate.setDate(prevDate.getDate() - 1);
+      var prevKey = getDateKey(prevDate);
+      var rolling7 = calculateRolling7DayTotal(data, prevKey);
       var paused = isDatePaused(data, key, day);
       var privs = getPrivileges(total, rolling7, paused);
 
@@ -1245,7 +1250,8 @@
       var miniHtml = '<div class="mini-week">';
       for (var mi = 6; mi >= 0; mi--) {
         var md = new Date(key + 'T12:00:00');
-        md.setDate(md.getDate() - mi);
+        // Shift back one extra day: chart shows the 7 days ENDING YESTERDAY, today is excluded
+        md.setDate(md.getDate() - mi - 1);
         var mk = getDateKey(md);
         var mday = getDayData(data, mk);
         var mTotal = calculateTotalForDate(mday, mk);
@@ -1266,8 +1272,9 @@
       }
       miniHtml += '</div>';
 
-      // Weekly date range
+      // Weekly date range \u2014 7 days ending YESTERDAY (today not included)
       var rangeEnd = new Date(key + 'T12:00:00');
+      rangeEnd.setDate(rangeEnd.getDate() - 1);
       var rangeStart = new Date(rangeEnd);
       rangeStart.setDate(rangeStart.getDate() - 6);
       var fmtOpts = { month: 'short', day: 'numeric' };
@@ -1275,10 +1282,11 @@
         rangeStart.toLocaleDateString('en-US', fmtOpts) + ' \u2013 ' +
         rangeEnd.toLocaleDateString('en-US', fmtOpts);
 
-      // Weekly totals
+      // Weekly totals \u2014 sum max for the 7 days ending YESTERDAY
       var weeklyPrivs = [privs.friendsHome, privs.churchDance, privs.friendsOut];
       var MAX_WEEKLY = 0;
       var wd = new Date(key + 'T12:00:00');
+      wd.setDate(wd.getDate() - 1);
       for (var wi = 0; wi < 7; wi++) {
         var wk = getDateKey(wd);
         MAX_WEEKLY += getMaxDailyForDate(wk);
